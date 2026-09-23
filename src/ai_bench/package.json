@@ -1,0 +1,21 @@
+{
+  "name": "ai_bench",
+  "version": "1.0.0",
+  "description": "desc",
+  "private": true,
+  "main": "./src/index.js",
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --minify --outfile=../../plugins/ai_bench/ai_bench.js",
+    "build:watch": "esbuild src/index.js --bundle --minify --outfile=../../plugins/ai_bench/ai_bench.js --watch",
+    "dev": "esbuild src/index.js --bundle --sourcemap --outfile=../../plugins/ai_bench/ai_bench.js --watch"
+  },
+  "keywords": [
+    "blockbench"
+  ],
+  "author": "legopitstop",
+  "license": "MIT",
+  "devDependencies": {
+    "blockbench-types": "^4.11.0",
+    "esbuild": "^0.25.6"
+  }
+}

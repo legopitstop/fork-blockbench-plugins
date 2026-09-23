@@ -1,0 +1,20 @@
+{
+  "setting.ai_service": "AI Service",
+  "setting.ai_service.desc": "Select the AI provider that you want to use.",
+  "setting.ai_service_options": "AI Service Config",
+  "setting.ai_service_options.desc": "Configuration for the select service.",
+
+  "service.ollama": "Ollama",
+  "service.ollama.desc": "Run large language models locally with Ollama.",
+  "service.openai": "OpenAI API",
+  "service.openai.desc": "desc",
+
+  "panel.ai_chat": "AI Chat",
+  "action.change_ai_model": "Change AI Model",
+  "action.change_ai_model.info": "Select or manage your AI models for the selected service.",
+  "action.ai_service_options": "AI Service Options",
+  "action.ai_service_options.info": "Change or configure your AI service.",
+
+  "dialog.ollama_config": "Ollama Config",
+  "dialog.ollama_config.info": "You can find and install Ollama models at [ollama.com](https://ollama.com/library)"
+}

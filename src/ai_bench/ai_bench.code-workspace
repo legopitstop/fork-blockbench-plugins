@@ -1,0 +1,11 @@
+{
+  "folders": [
+    {
+      "path": "../../plugins/ai_bench"
+    },
+    {
+      "path": "../../src/ai_bench"
+    }
+  ],
+  "settings": {}
+}
