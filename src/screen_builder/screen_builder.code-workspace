@@ -1,0 +1,11 @@
+{
+  "folders": [
+    {
+      "path": "../../plugins/screen_builder"
+    },
+    {
+      "path": "../../src/screen_builder"
+    }
+  ],
+  "settings": {}
+}
