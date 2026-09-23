@@ -1,0 +1,11 @@
+{
+  "folders": [
+    {
+      "path": "../../plugins/macros"
+    },
+    {
+      "path": "../../src/macros"
+    }
+  ],
+  "settings": {}
+}
