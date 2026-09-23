@@ -1,0 +1,11 @@
+{
+  "folders": [
+    {
+      "path": "../../plugins/pixel_pets"
+    },
+    {
+      "path": "../../src/pixel_pets"
+    }
+  ],
+  "settings": {}
+}

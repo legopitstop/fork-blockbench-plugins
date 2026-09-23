@@ -1,0 +1,20 @@
+{
+  "name": "pixel_pets",
+  "version": "1.0.0",
+  "description": "desc",
+  "main": "./src/index.js",
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --minify --outfile=../../plugins/tweaks_n_stuff/tweaks_n_stuff.js",
+    "build:watch": "esbuild src/index.js --bundle --minify --outfile=../../plugins/tweaks_n_stuff/tweaks_n_stuff.js --watch",
+    "dev": "esbuild src/index.js --bundle --sourcemap --outfile=../../plugins/tweaks_n_stuff/tweaks_n_stuff.js --watch"
+  },
+  "keywords": [
+    "blockbench"
+  ],
+  "author": "legopitstop",
+  "license": "MIT",
+  "devDependencies": {
+    "blockbench-types": "^4.11.0",
+    "esbuild": "0.19.4"
+  }
+}
