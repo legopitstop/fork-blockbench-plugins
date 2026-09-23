@@ -1,0 +1,7 @@
+{
+  "settings.example": "example",
+  "settings.example.desc": "desc",
+
+  "action.example": "example",
+  "action.example.desc": "desc"
+}
