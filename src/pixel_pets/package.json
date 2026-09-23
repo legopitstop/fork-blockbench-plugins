@@ -4,9 +4,9 @@
   "description": "desc",
   "main": "./src/index.js",
   "scripts": {
-    "build": "esbuild src/index.js --bundle --minify --outfile=../../plugins/tweaks_n_stuff/tweaks_n_stuff.js",
-    "build:watch": "esbuild src/index.js --bundle --minify --outfile=../../plugins/tweaks_n_stuff/tweaks_n_stuff.js --watch",
-    "dev": "esbuild src/index.js --bundle --sourcemap --outfile=../../plugins/tweaks_n_stuff/tweaks_n_stuff.js --watch"
+    "build": "esbuild src/index.js --bundle --minify --outfile=../../plugins/pixel_pets/pixel_pets.js",
+    "build:watch": "esbuild src/index.js --bundle --minify --outfile=../../plugins/pixel_pets/pixel_pets.js --watch",
+    "dev": "esbuild src/index.js --bundle --sourcemap --outfile=../../plugins/pixel_pets/pixel_pets.js --watch"
   },
   "keywords": [
     "blockbench"
@@ -14,7 +14,11 @@
   "author": "legopitstop",
   "license": "MIT",
   "devDependencies": {
-    "blockbench-types": "^4.11.0",
+    "blockbench-types": "^4.12.2",
     "esbuild": "0.19.4"
+  },
+  "allowScripts": {
+    "esbuild@0.19.4": true,
+    "electron@33.4.11": true
   }
 }
