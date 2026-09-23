@@ -1,0 +1,40 @@
+{
+  "plugins": [
+    {
+      "id": "optifine_player_models",
+      "formats": ["optifine_player_model"]
+    },
+    {
+      "id": "animation_utils",
+      "formats": ["animated_entity_model"]
+    },
+    {
+      "id": "azurelib_utils",
+      "formats": ["azure_model"]
+    },
+    {
+      "id": "bamo",
+      "formats": ["bamo_model"]
+    },
+    {
+      "id": "cosmic_reach_model_editor",
+      "formats": ["cosmic_reach_model", "cosmic_reach_entity_model"]
+    },
+    {
+      "id": "figura_format",
+      "formats": ["figura"]
+    },
+    {
+      "id": "free_rotation",
+      "formats": ["free_rotation"]
+    },
+    {
+      "id": "minecraft_title_generator",
+      "formats": ["minecraft_title"]
+    },
+    {
+      "id": "preview_scene_customiser",
+      "formats": ["preview_scene_model"]
+    }
+  ]
+}

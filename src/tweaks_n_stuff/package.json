@@ -1,0 +1,24 @@
+{
+  "name": "tweaks_n_stuff",
+  "version": "1.1.0",
+  "description": "Adds a few tweaks to Blockbench to make your modeling experience better.",
+  "private": true,
+  "main": "./src/index.js",
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --minify --outfile=../../plugins/tweaks_n_stuff/tweaks_n_stuff.js",
+    "build:watch": "esbuild src/index.js --bundle --minify --outfile=../../plugins/tweaks_n_stuff/tweaks_n_stuff.js --watch",
+    "dev": "esbuild src/index.js --bundle --sourcemap --outfile=../../plugins/tweaks_n_stuff/tweaks_n_stuff.js --watch"
+  },
+  "keywords": [
+    "blockbench"
+  ],
+  "author": "legopitstop",
+  "license": "MIT",
+  "devDependencies": {
+    "blockbench-types": "4.9.0",
+    "esbuild": "0.19.4"
+  },
+  "dependencies": {
+    "qr-code-styling": "^1.9.1"
+  }
+}
