@@ -1,0 +1,13 @@
+{
+  "name": "Render Items",
+  "icon": "movie",
+  "intents": [
+    {
+      "type": "show_content",
+      "uuid": "6c4f4bef-d87d-49fd-ba85-bc2a0aa68bcd",
+      "params": {
+        "text": "Not implemented!"
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Export All",
+  "icon": "insert_drive_file",
+  "intents": [
+    {
+      "type": "show_content",
+      "uuid": "cb528404-54af-4fad-88f3-860905b464fa",
+      "params": {
+        "text": "Not implemented!"
+      }
+    }
+  ]
+}

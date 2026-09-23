@@ -1,0 +1,27 @@
+{
+  "name": "Default 2",
+  "icon": "play_arrow",
+  "intents": [
+    {
+      "type": "ask_input",
+      "uuid": "582f3193-2c3e-40f3-8d72-edb638e20e27",
+      "params": {
+        "type": "text"
+      }
+    },
+    {
+      "type": "wait",
+      "uuid": "06ecad70-c5e4-42ef-9fc9-d96361b9dafe",
+      "perms": {
+        "seconds": 2
+      }
+    },
+    {
+      "type": "show_content",
+      "uuid": "ee7be754-661a-4b09-b849-cdeaac25f179",
+      "params": {
+        "text": "TEXT"
+      }
+    }
+  ]
+}

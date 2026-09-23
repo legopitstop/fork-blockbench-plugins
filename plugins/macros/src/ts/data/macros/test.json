@@ -1,0 +1,18 @@
+{
+  "name": "Test",
+  "icon": "play_arrow",
+  "intents": [
+    {
+      "type": "ask_input",
+      "uuid": "6014b958-184f-44b9-a7f7-8a7c9544f7fa",
+      "params": {}
+    },
+    {
+      "type": "show_content",
+      "uuid": "6014b958-184f-44b9-a7f7-8a7c9544f7fa",
+      "params": {
+        "text": "$result"
+      }
+    }
+  ]
+}
