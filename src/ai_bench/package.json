@@ -21,5 +21,8 @@
   "allowScripts": {
     "electron@33.4.11": true,
     "esbuild@0.25.12": true
+  },
+  "dependencies": {
+    "openai": "^7.23.0"
   }
 }
