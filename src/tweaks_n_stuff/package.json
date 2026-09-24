@@ -1,24 +1,27 @@
 {
   "name": "tweaks_n_stuff",
-  "version": "1.1.0",
-  "description": "Adds a few tweaks to Blockbench to make your modeling experience better.",
   "private": true,
-  "main": "./src/index.js",
+  "main": "./ts/index.ts",
   "scripts": {
-    "build": "esbuild src/index.js --bundle --minify --outfile=../../plugins/tweaks_n_stuff/tweaks_n_stuff.js",
-    "build:watch": "esbuild src/index.js --bundle --minify --outfile=../../plugins/tweaks_n_stuff/tweaks_n_stuff.js --watch",
-    "dev": "esbuild src/index.js --bundle --sourcemap --outfile=../../plugins/tweaks_n_stuff/tweaks_n_stuff.js --watch"
+    "build": "node build.mjs",
+    "rebuild": "npm run build && echo Done!",
+    "dev": "chokidar \"ts/**/*\" -c \"npm run rebuild\" -d"
   },
   "keywords": [
     "blockbench"
   ],
   "author": "legopitstop",
   "license": "MIT",
-  "devDependencies": {
-    "blockbench-types": "4.9.0",
-    "esbuild": "0.19.4"
-  },
   "dependencies": {
-    "qr-code-styling": "^1.9.1"
+    "esbuild": "^0.25.12",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "blockbench-types": "^5.1.0",
+    "chokidar-cli": "^3.0.0"
+  },
+  "allowScripts": {
+    "electron@40.10.6": true,
+    "esbuild@0.25.12": true
   }
 }
