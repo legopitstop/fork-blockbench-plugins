@@ -1,25 +1,27 @@
 {
   "name": "object_notes",
-  "version": "1.0.0",
-  "description": "desc",
   "private": true,
-  "main": "./src/index.js",
+  "main": "./ts/index.ts",
   "scripts": {
-    "build": "esbuild src/index.js --bundle --minify --outfile=../../plugins/object_notes/object_notes.js",
-    "build:watch": "esbuild src/index.js --bundle --minify --outfile=../../plugins/object_notes/object_notes.js --watch",
-    "dev": "esbuild src/index.js --bundle --sourcemap --outfile=../../plugins/object_notes/object_notes.js --watch"
+    "build": "node build.mjs",
+    "rebuild": "npm run build && echo Done!",
+    "dev": "chokidar \"ts/**/*\" -c \"npm run rebuild\" -d"
   },
   "keywords": [
     "blockbench"
   ],
   "author": "legopitstop",
   "license": "MIT",
+  "dependencies": {
+    "esbuild": "^0.25.12",
+    "typescript": "^5.9.3"
+  },
   "devDependencies": {
-    "blockbench-types": "^4.12.2",
-    "esbuild": "^0.25.12"
+    "blockbench-types": "^5.1.0",
+    "chokidar-cli": "^3.0.0"
   },
   "allowScripts": {
     "esbuild@0.25.12": true,
-    "electron@33.4.11": true
+    "electron@40.10.6": true
   }
 }
