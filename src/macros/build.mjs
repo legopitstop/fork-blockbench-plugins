@@ -2,7 +2,7 @@ import { build } from "esbuild";
 
 const buildOptions = {
   entryPoints: ["./ts"],
-  outfile: "../macros.js",
+  outfile: "../../plugins/macros/macros.js",
   format: "esm",
   bundle: true,
   minify: true,
