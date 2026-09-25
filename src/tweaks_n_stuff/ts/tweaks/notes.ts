@@ -10,21 +10,28 @@ class NotesTweak extends ToggleTweak {
   }
 
   private static injectCompile(options: any): any {
+    if (Project) Project.notes = NotesTweak.panel.vue.notes ?? "";
     const res = NotesTweak.originalCompile.apply(Codecs.project, [options]);
-    try {
-      const data = JSON.parse(res);
-      data.notes = NotesTweak.panel.vue.notes ?? "";
-      return JSON.stringify(data);
-    } catch (err) {
-      return res;
+    if (typeof res === "string") {
+      try {
+        const data = JSON.parse(res);
+        data.notes = Project?.notes ?? "";
+        return JSON.stringify(data);
+      } catch (err) {
+        return res;
+      }
     }
+    if (res && typeof res === "object") res.notes = Project?.notes ?? "";
+    return res;
   }
 
   private static injectParse(model: any, path: string): any {
-    NotesTweak.originalParse.apply(Codecs.project, [model, path]);
-    Project.notes = model.notes ?? "";
-    NotesTweak.panel.vue.notes = Project.notes;
-    return;
+    const result = NotesTweak.originalParse.apply(Codecs.project, [model, path]);
+    if (Project) {
+      Project.notes = model.notes ?? "";
+      NotesTweak.panel.vue.notes = Project.notes;
+    }
+    return result;
   }
 
   // EVENTS
@@ -70,6 +77,13 @@ class NotesTweak extends ToggleTweak {
           mode: noteEditorMode.value,
           notes: "",
         },
+        watch: {
+          notes(value: string) {
+            if (!Project || value === (Project.notes ?? "")) return;
+            Project.notes = value;
+            Project.saved = false;
+          },
+        },
         methods: {
           formatNote(text: string): string {
             return pureMarked(text);
@@ -90,7 +104,7 @@ class NotesTweak extends ToggleTweak {
       },
     });
     const select = Blockbench.on("select_project", () => {
-      NotesTweak.panel.vue.notes = Project.notes;
+      NotesTweak.panel.vue.notes = Project?.notes ?? "";
     });
     const unselect = Blockbench.on("unselect_project", ({ project }) => {
       project.notes = NotesTweak.panel.vue.notes;

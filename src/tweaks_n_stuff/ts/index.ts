@@ -5,7 +5,6 @@ import { Mixins } from "./mixins";
 import "./tweaks";
 import { chunkDigger } from "./digger";
 
-var clicks = 0;
 var deleteables: Deletable[] = [];
 
 BBPlugin.register(ID, {
