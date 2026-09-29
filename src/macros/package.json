@@ -4,6 +4,7 @@
   "main": "./ts/index.ts",
   "scripts": {
     "build": "node build.mjs",
+    "test": "vitest run",
     "rebuild": "npm run build && echo Done!",
     "dev": "chokidar \"ts/**/*\" -c \"npm run rebuild\" -d"
   },
@@ -17,11 +18,26 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "blockbench-types": "^5.1.0",
-    "chokidar-cli": "^3.0.0"
+    "blockbench-types": "^5.2.0",
+    "chokidar-cli": "^3.0.0",
+    "vite": "^6.4.3",
+    "vitest": "^3.2.7"
   },
   "allowScripts": {
     "electron@40.10.6": true,
     "esbuild@0.25.12": true
+  },
+  "peerDependencies": {
+    "dompurify": "^3.4.16",
+    "file-saver": "^2.0.5",
+    "gif.js": "^0.2.0",
+    "gifenc": "^1.0.3",
+    "jquery": "^4.0.0",
+    "jszip": "^3.10.2",
+    "molangjs": "^1.7.1",
+    "prismjs": "^1.30.0",
+    "strip-json-comments": "^5.0.3",
+    "vue": "^2.7.16",
+    "vue-sortable": "^0.1.3"
   }
 }

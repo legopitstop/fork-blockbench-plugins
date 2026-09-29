@@ -3,11 +3,26 @@
   "icon": "insert_drive_file",
   "intents": [
     {
-      "type": "show_content",
+      "type": "get_project_items",
       "uuid": "cb528404-54af-4fad-88f3-860905b464fa",
       "params": {
-        "text": "Not implemented!"
+        "items": "projects"
       }
+    },
+    {
+      "type": "repeat_each",
+      "uuid": "388113f7-71ac-445c-9e8a-d467e0cbe4e5",
+      "params": { "items": "$result" }
+    },
+    {
+      "type": "export_project",
+      "uuid": "17094441-421e-46d6-89d0-96a25036784d",
+      "params": { "project": "$item", "export": "project" }
+    },
+    {
+      "type": "end_repeat_each",
+      "uuid": "482bd3c6-62bd-44e6-900a-75a763005862",
+      "params": {}
     }
   ]
 }

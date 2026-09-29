@@ -3,11 +3,31 @@
   "icon": "bar_chart",
   "intents": [
     {
-      "type": "show_content",
+      "type": "get_project_items",
       "uuid": "ba0463f8-12ed-4ddd-82ef-0674137ad595",
       "params": {
-        "text": "Not implemented!"
+        "items": "selected_cubes"
       }
+    },
+    {
+      "type": "repeat_each",
+      "uuid": "f1768986-d4ec-4819-a893-d6c8462037c7",
+      "params": { "items": "$result" }
+    },
+    {
+      "type": "random_number",
+      "uuid": "3b3d84af-36ba-4f70-b5ec-bc3e65b59481",
+      "params": { "min": 1, "max": 16 }
+    },
+    {
+      "type": "set_cube_dimension",
+      "uuid": "4c394fa5-2204-41c1-96b1-6b4e517acc04",
+      "params": { "cube": "$item", "axis": "y", "size": "$result" }
+    },
+    {
+      "type": "end_repeat_each",
+      "uuid": "70785570-9cd0-46fd-a279-c59568321a35",
+      "params": {}
     }
   ]
 }

@@ -1,0 +1,41 @@
+{
+  "name": "Render Projects",
+  "icon": "movie",
+  "intents": [
+    { "type": "get_project_items", "uuid": "6c4f4bef-d87d-49fd-ba85-bc2a0aa68bcd", "params": { "items": "projects" } },
+    {
+      "type": "set_variable",
+      "uuid": "f5f9795d-267f-4507-b13e-1d7c1d25354e",
+      "params": { "name": "render_projects", "input": "$result" }
+    },
+    { "type": "choose_output_folder", "uuid": "6d40a245-3907-42b0-aa0b-96453af24669", "params": {} },
+    {
+      "type": "set_variable",
+      "uuid": "94e3dd0b-f36d-4538-839c-e55a28f09439",
+      "params": { "name": "render_folder", "input": "$result" }
+    },
+    {
+      "type": "repeat_each",
+      "uuid": "95ab83b2-7c9d-488c-8ea4-eb83dbe6da22",
+      "params": { "items": "$input:f5f9795d-267f-4507-b13e-1d7c1d25354e:input" }
+    },
+    { "type": "select_project", "uuid": "9d575951-b103-4d97-b82e-62316214aba6", "params": { "project": "$item" } },
+    {
+      "type": "set_variable",
+      "uuid": "963d7cf9-aeec-47c4-a813-d65db81881ce",
+      "params": { "name": "render_project_name", "input": "$result" }
+    },
+    { "type": "wait", "uuid": "52da01ef-23ad-4e51-a3e2-849bde60e3f9", "params": { "seconds": 0.1 } },
+    { "type": "take_screenshot", "uuid": "4ccf70e3-aae2-4d5e-a6f7-c2e190535d96", "params": { "source": "clean" } },
+    {
+      "type": "save_image",
+      "uuid": "6e395c6a-3fd2-49c3-a277-9ae7e3bb3ff5",
+      "params": {
+        "image": "$result",
+        "name": "$input:963d7cf9-aeec-47c4-a813-d65db81881ce:input",
+        "folder": "$input:94e3dd0b-f36d-4538-839c-e55a28f09439:input"
+      }
+    },
+    { "type": "end_repeat_each", "uuid": "9d4d4971-28b7-420c-9f03-3c823cfaeea9", "params": {} }
+  ]
+}

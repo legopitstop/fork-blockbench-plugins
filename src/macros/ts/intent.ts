@@ -2,7 +2,9 @@
 
 import { MacroData, Macros } from "./macro";
 import { defineComponent } from "vue";
+import type { InputFormConfig } from "blockbench-types/generated/interface/form";
 import { hasPlugin, loadJson, saveJson } from "./utils";
+import { intentIcons } from "./intents/icons";
 
 export interface IntentData {
   type: string;
@@ -10,7 +12,7 @@ export interface IntentData {
   params: IntentParameters;
 }
 
-export type IntentResult = boolean | string | number | URL | Date | "__return";
+export type IntentResult = boolean | string | number | URL | Date | null | IntentResult[] | { [key: string]: IntentResult } | "__return" | undefined;
 
 export enum IntentParameterTypes {
   Text = "text",
@@ -28,7 +30,7 @@ export interface IntentParameter {
   type: IntentParameterTypes;
 }
 
-export type IntentParameters = { [key: string]: boolean | string | number | URL | Date };
+export type IntentParameters = { [key: string]: IntentResult };
 
 export interface IntentOptions {
   /**
@@ -72,7 +74,6 @@ export class Intent {
   static menu: Action;
   static manageDialog: Dialog;
   static editDialog: Dialog;
-  static actionChooser: Dialog;
 
   static all = new Map<string, Intent>();
 
@@ -169,8 +170,13 @@ export class Intent {
   constructor(id: string, options?: IntentOptions) {
     this.id = id;
     this.options = options ?? { perform: () => undefined };
+    if (new.target === Intent && Object.prototype.hasOwnProperty.call(intentIcons, id)) this.options.icon = intentIcons[id];
     if (!this.options.name) this.options.name = tl(`macros.${this.id}`);
-    if (!this.options.description) this.options.description = tl(`macros.${this.id}.desc`);
+    if (!this.options.description) {
+      const key = `macros.${this.id}.desc`;
+      const translated = tl(key);
+      this.options.description = translated === key ? this.options.name : translated;
+    }
     if (!this.options.summary) this.options.summary = () => tl(`macros.${this.id}.summary`);
     this.initialize();
   }
@@ -181,12 +187,14 @@ export class Intent {
 
   readonly id: string;
   options: IntentOptions;
+  readonly enumValues = new Map<string, string[]>();
 
   getName(): string {
     return this.options.name ?? tl(`macros.${this.id}`);
   }
 
   addEnum(name: string, values: string[]): Intent {
+    this.enumValues.set(name, values);
     return this;
   }
 
@@ -199,9 +207,7 @@ export class Intent {
     if (!intent) return false;
     const variant = Blockbench.isWeb ? "web" : "desktop";
     const v = intent.options?.variant ?? "both";
-    if (v === "both") return true;
-    if (v !== variant) return false;
-    return false;
+    return v === "both" || v === variant;
   }
 
   /**
