@@ -4,7 +4,8 @@ import { Intent, IntentParameterTypes as Type, IntentParameters, IntentResult } 
 
 const text = (value: IntentResult) => String(value ?? "").trim();
 const field = (name: string, type: Type = Type.Text) => ({ name, type });
-const animationClass = () => (globalThis as any).Animation as { new (data?: AnimationOptions): _Animation; all: _Animation[] };
+const animationClass = () =>
+  (globalThis as any).Animation as { new (data?: AnimationOptions): _Animation; all: _Animation[] };
 
 function selectedProject(params: IntentParameters): ModelProject {
   const key = text(params.project);
@@ -47,15 +48,21 @@ function editableElement(value: IntentResult): Cube | Group {
 
 function elementProperty(element: Cube | Group, property: string): IntentResult {
   switch (property) {
-    case "name": return element.name;
-    case "visibility": return element.visibility;
-    case "rotation": return [...element.rotation];
-    case "pivot": return [...element.origin];
-    case "position": return [...(element instanceof Cube ? element.from : element.origin)];
+    case "name":
+      return element.name;
+    case "visibility":
+      return element.visibility;
+    case "rotation":
+      return [...element.rotation];
+    case "pivot":
+      return [...element.origin];
+    case "position":
+      return [...(element instanceof Cube ? element.from : element.origin)];
     case "size":
       if (element instanceof Cube) return element.to.map((value, index) => value - element.from[index]);
       throw new Error("Size is only available for cubes");
-    default: throw new Error(`Unknown element property: ${property}`);
+    default:
+      throw new Error(`Unknown element property: ${property}`);
   }
 }
 
@@ -65,31 +72,57 @@ function booleanValue(value: IntentResult): boolean {
   throw new Error("Visibility must be true or false");
 }
 
-const modelReadType = (path: string): "text" | "buffer" => /\.(glb|bin)$/i.test(path) ? "buffer" : "text";
+const modelReadType = (path: string): "text" | "buffer" => (/\.(glb|bin)$/i.test(path) ? "buffer" : "text");
 
 new Intent("add_flag", {
-  category: "blockbench", parameters: [field("flag")],
-  perform(params) { const flag = text(params.flag); if (!flag) throw new Error("Flag is required"); Blockbench.addFlag(flag); return flag; },
+  category: "blockbench",
+  parameters: [field("flag")],
+  perform(params) {
+    const flag = text(params.flag);
+    if (!flag) throw new Error("Flag is required");
+    Blockbench.addFlag(flag);
+    return flag;
+  },
 });
 new Intent("remove_flag", {
-  category: "blockbench", parameters: [field("flag")],
-  perform(params) { const flag = text(params.flag); if (!flag) throw new Error("Flag is required"); Blockbench.removeFlag(flag); return flag; },
+  category: "blockbench",
+  parameters: [field("flag")],
+  perform(params) {
+    const flag = text(params.flag);
+    if (!flag) throw new Error("Flag is required");
+    Blockbench.removeFlag(flag);
+    return flag;
+  },
 });
 new Intent("get_flags", {
-  category: "blockbench", perform() { return [...Blockbench.flags].map(String); },
+  category: "blockbench",
+  perform() {
+    return [...Blockbench.flags].map(String);
+  },
 });
 
 new Intent("get_setting_value", {
-  category: "blockbench", parameters: [field("setting")],
-  perform(params) { const setting = settings[text(params.setting)]; if (!setting) throw new Error(`Setting not found: ${params.setting}`); return setting.value; },
+  category: "blockbench",
+  parameters: [field("setting")],
+  perform(params) {
+    const setting = settings[text(params.setting)];
+    if (!setting) throw new Error(`Setting not found: ${params.setting}`);
+    return setting.value;
+  },
 });
 new Intent("set_setting_value", {
-  category: "blockbench", parameters: [field("setting"), field("value")],
+  category: "blockbench",
+  parameters: [field("setting"), field("value")],
   perform(params) {
     const setting = settings[text(params.setting)];
     if (!setting) throw new Error(`Setting not found: ${params.setting}`);
     const original = setting.value;
-    const value = typeof original === "boolean" ? params.value === true || params.value === "true" : typeof original === "number" ? Number(params.value) : text(params.value);
+    const value =
+      typeof original === "boolean"
+        ? params.value === true || params.value === "true"
+        : typeof original === "number"
+          ? Number(params.value)
+          : text(params.value);
     if (typeof value === "number" && !Number.isFinite(value)) throw new Error("Setting value must be a number");
     setting.set(value);
     return setting.value;
@@ -97,36 +130,66 @@ new Intent("set_setting_value", {
 });
 
 new Intent("select_project", {
-  category: "blockbench", parameters: [field("project")],
-  perform(params) { return selectedProject(params).name; },
+  category: "blockbench",
+  parameters: [field("project")],
+  perform(params) {
+    return selectedProject(params).name;
+  },
 });
 new Intent("close_project", {
-  category: "blockbench", parameters: [field("project")],
-  async perform(params) { return selectedProject(params).close(); },
+  category: "blockbench",
+  parameters: [field("project")],
+  async perform(params) {
+    return selectedProject(params).close();
+  },
 });
 new Intent("export_project", {
-  category: "blockbench", parameters: [field("project"), field("export")],
-  perform(params) { selectedProject(params); codec(params.export).export(); return true; },
+  category: "blockbench",
+  parameters: [field("project"), field("export")],
+  perform(params) {
+    selectedProject(params);
+    codec(params.export).export();
+    return true;
+  },
 });
 new Intent("import_project", {
-  category: "blockbench", parameters: [field("file")],
+  category: "blockbench",
+  parameters: [field("file")],
   async perform(params) {
     const path = text(params.file);
     if (path && Blockbench.isWeb) throw new Error("Importing a file path requires desktop Blockbench");
     if (path) {
-      return new Promise((resolve, reject) => Blockbench.read([path], { readtype: modelReadType(path) }, (files) => {
-        try { if (!files?.length) throw new Error(`Could not read: ${path}`); loadModelFile(files[0], {}); resolve(files[0].name); }
-        catch (error) { reject(error); }
-      }));
+      return new Promise((resolve, reject) =>
+        Blockbench.read([path], { readtype: modelReadType(path) }, (files) => {
+          try {
+            if (!files?.length) throw new Error(`Could not read: ${path}`);
+            loadModelFile(files[0], {});
+            resolve(files[0].name);
+          } catch (error) {
+            reject(error);
+          }
+        }),
+      );
     }
-    return new Promise((resolve, reject) => Blockbench.import({ type: "Model", extensions: ["bbmodel", "json", "obj", "gltf", "glb"], readtype: modelReadType }, (files) => {
-      try { if (!files?.length) return resolve(undefined); loadModelFile(files[0], {}); resolve(files[0].name); }
-      catch (error) { reject(error); }
-    }));
+    return new Promise((resolve, reject) =>
+      Blockbench.import(
+        { type: "Model", extensions: ["bbmodel", "json", "obj", "gltf", "glb"], readtype: modelReadType },
+        (files) => {
+          try {
+            if (!files?.length) return resolve(undefined);
+            loadModelFile(files[0], {});
+            resolve(files[0].name);
+          } catch (error) {
+            reject(error);
+          }
+        },
+      ),
+    );
   },
 });
 new Intent("convert_format", {
-  category: "blockbench", parameters: [field("project"), field("format")],
+  category: "blockbench",
+  parameters: [field("project"), field("format")],
   perform(params) {
     selectedProject(params);
     const format = Formats[text(params.format)];
@@ -136,7 +199,8 @@ new Intent("convert_format", {
   },
 });
 new Intent("run_blockbench_action", {
-  category: "blockbench", parameters: [field("action")],
+  category: "blockbench",
+  parameters: [field("action")],
   perform(params) {
     const id = text(params.action);
     const action = BarItems[id];
@@ -146,27 +210,46 @@ new Intent("run_blockbench_action", {
 });
 
 new Intent("add_animation", {
-  category: "blockbench", parameters: [field("project"), field("animation")],
-  perform(params) { selectedProject(params); const animation = new (animationClass())({ name: text(params.animation) || "animation" }).add(true); return animation.uuid; },
+  category: "blockbench",
+  parameters: [field("project"), field("animation")],
+  perform(params) {
+    selectedProject(params);
+    const animation = new (animationClass())({ name: text(params.animation) || "animation" }).add(true);
+    return animation.uuid;
+  },
 });
 new Intent("remove_animation", {
-  category: "blockbench", parameters: [field("project"), field("animation")],
-  perform(params) { selectedProject(params); const animation = find(animationClass().all, params.animation, "Animation"); animation.remove(true); return animation.uuid; },
+  category: "blockbench",
+  parameters: [field("project"), field("animation")],
+  perform(params) {
+    selectedProject(params);
+    const animation = find(animationClass().all, params.animation, "Animation");
+    animation.remove(true);
+    return animation.uuid;
+  },
 });
 
 new Intent("add_cube", {
-  category: "blockbench", parameters: [field("project"), field("cube"), field("from"), field("to"), field("group")],
+  category: "blockbench",
+  parameters: [field("project"), field("cube"), field("position"), field("size"), field("group")],
+  form: { position: { type: "vector", value: [0, 0, 0] }, size: { type: "vector", value: [1, 1, 1] } } as any,
   perform(params) {
     selectedProject(params);
     const parent = text(params.group) ? find(Group.all, params.group, "Group") : undefined;
     Undo.initEdit({ elements: [] });
-    const cube = new Cube({ name: text(params.cube) || "cube", from: vector(params.from, [0, 0, 0]), to: vector(params.to, [1, 1, 1]) }).addTo(parent).init();
+    const from = vector(params.position ?? params.from, [0, 0, 0]);
+    const to =
+      params.position !== undefined || params.size !== undefined
+        ? (vector(params.size, [1, 1, 1]).map((dimension, axis) => from[axis] + dimension) as [number, number, number])
+        : vector(params.to, [1, 1, 1]);
+    const cube = new Cube({ name: text(params.cube) || "cube", from, to }).addTo(parent).init();
     Undo.finishEdit("Add cube", { elements: [cube] });
     return cube.uuid;
   },
 });
 new Intent("remove_cube", {
-  category: "blockbench", parameters: [field("project"), field("cube")],
+  category: "blockbench",
+  parameters: [field("project"), field("cube")],
   perform(params) {
     selectedProject(params);
     const cube = find(Cube.all, params.cube, "Cube");
@@ -177,7 +260,8 @@ new Intent("remove_cube", {
   },
 });
 new Intent("add_group", {
-  category: "blockbench", parameters: [field("project"), field("group"), field("parent")],
+  category: "blockbench",
+  parameters: [field("project"), field("group"), field("parent")],
   perform(params) {
     selectedProject(params);
     const parent = text(params.parent) ? find(Group.all, params.parent, "Parent group") : undefined;
@@ -188,16 +272,30 @@ new Intent("add_group", {
   },
 });
 new Intent("remove_group", {
-  category: "blockbench", parameters: [field("project"), field("group")],
-  perform(params) { selectedProject(params); const group = find(Group.all, params.group, "Group"); const id = group.uuid; group.remove(true); return id; },
+  category: "blockbench",
+  parameters: [field("project"), field("group")],
+  perform(params) {
+    selectedProject(params);
+    const group = find(Group.all, params.group, "Group");
+    const id = group.uuid;
+    group.remove(true);
+    return id;
+  },
 });
 new Intent("open_group", {
-  category: "blockbench", parameters: [field("project"), field("group")],
-  perform(params) { selectedProject(params); const group = find(Group.all, params.group, "Group"); group.openUp(); return group.uuid; },
+  category: "blockbench",
+  parameters: [field("project"), field("group")],
+  perform(params) {
+    selectedProject(params);
+    const group = find(Group.all, params.group, "Group");
+    group.openUp();
+    return group.uuid;
+  },
 });
 
 new Intent("on_event", {
-  category: "blockbench", parameters: [field("event")],
+  category: "blockbench",
+  parameters: [field("event")],
   perform(params) {
     const event = text(params.event);
     if (!event) throw new Error("Event name is required");
@@ -205,10 +303,14 @@ new Intent("on_event", {
   },
 });
 new Intent("show_preview_scene", {
-  category: "blockbench", parameters: [field("preview")],
+  category: "blockbench",
+  parameters: [field("preview")],
   perform(params) {
     const id = text(params.preview);
-    if (!id) { PreviewScene.active?.unselect(); return ""; }
+    if (!id) {
+      PreviewScene.active?.unselect();
+      return "";
+    }
     const scene = PreviewScene.scenes[id];
     if (!scene) throw new Error(`Preview scene not found: ${id}`);
     scene.select();
@@ -217,15 +319,28 @@ new Intent("show_preview_scene", {
 });
 
 new Intent("add_texture_group", {
-  category: "blockbench", parameters: [field("project"), field("group")],
-  perform(params) { selectedProject(params); const group = new TextureGroup({ name: text(params.group) || "group" }).add(); return group.uuid; },
+  category: "blockbench",
+  parameters: [field("project"), field("group")],
+  perform(params) {
+    selectedProject(params);
+    const group = new TextureGroup({ name: text(params.group) || "group" }).add();
+    return group.uuid;
+  },
 });
 new Intent("remove_texture_group", {
-  category: "blockbench", parameters: [field("project"), field("group")],
-  perform(params) { selectedProject(params); const group = find(TextureGroup.all, params.group, "Texture group"); const id = group.uuid; group.remove(); return id; },
+  category: "blockbench",
+  parameters: [field("project"), field("group")],
+  perform(params) {
+    selectedProject(params);
+    const group = find(TextureGroup.all, params.group, "Texture group");
+    const id = group.uuid;
+    group.remove();
+    return id;
+  },
 });
 new Intent("add_texture_layer", {
-  category: "blockbench", parameters: [field("project"), field("texture"), field("layer")],
+  category: "blockbench",
+  parameters: [field("project"), field("texture"), field("layer")],
   perform(params) {
     selectedProject(params);
     const texture = find(Texture.all, params.texture, "Texture");
@@ -235,7 +350,8 @@ new Intent("add_texture_layer", {
   },
 });
 new Intent("remove_texture_layer", {
-  category: "blockbench", parameters: [field("project"), field("texture"), field("layer")],
+  category: "blockbench",
+  parameters: [field("project"), field("texture"), field("layer")],
   perform(params) {
     selectedProject(params);
     const texture = find(Texture.all, params.texture, "Texture");
@@ -247,34 +363,43 @@ new Intent("remove_texture_layer", {
 });
 
 new Intent("get_project_items", {
-  category: "blockbench", parameters: [field("items", Type.Enum)],
+  category: "blockbench",
+  parameters: [field("items", Type.Enum)],
   perform(params) {
     switch (params.items) {
-      case "projects": return ModelProject.all.map((item) => item.uuid);
-      case "selected_cubes": return Cube.selected.map((item) => item.uuid);
-      case "selected_elements": return OutlinerElement.selected.map((item) => item.uuid);
-      default: throw new Error(`Unknown item collection: ${params.items}`);
+      case "projects":
+        return ModelProject.all.map((item) => item.uuid);
+      case "selected_cubes":
+        return Cube.selected.map((item) => item.uuid);
+      case "selected_elements":
+        return OutlinerElement.selected.map((item) => item.uuid);
+      default:
+        throw new Error(`Unknown item collection: ${params.items}`);
     }
   },
 }).addEnum("items", ["projects", "selected_cubes", "selected_elements"]);
 
 new Intent("select_elements", {
   category: "blockbench",
-  description: "Select outliner elements or groups by UUID or name. Accepts a list, or comma-separated or newline-separated names. Leave Elements empty to use the previous action's output.",
+  description:
+    "Select outliner elements or groups by UUID or name. Accepts a list, or comma-separated or newline-separated names. Leave Elements empty to use the previous action's output.",
   parameters: [field("elements"), field("mode", Type.Enum)],
   perform(params, _macro, result) {
     if (!Project) throw new Error("No project is open");
     const mode = text(params.mode) || "replace";
     if (mode !== "replace" && mode !== "add") throw new Error(`Unknown selection mode: ${mode}`);
     const input = params.elements === "" || params.elements == null ? result : params.elements;
-    const keys = (Array.isArray(input) ? input : text(input).split(/[,\r\n]+/))
-      .map(text).filter(Boolean);
-    const nodes = [...new Set(keys.map((key) => {
-      const node = Outliner.nodes.find((item) => item.uuid === key || item.name === key);
-      if (!node) throw new Error(`Outliner element not found: ${key}`);
-      if (node.locked) throw new Error(`Outliner element is locked: ${key}`);
-      return node;
-    }))];
+    const keys = (Array.isArray(input) ? input : text(input).split(/[,\r\n]+/)).map(text).filter(Boolean);
+    const nodes = [
+      ...new Set(
+        keys.map((key) => {
+          const node = Outliner.nodes.find((item) => item.uuid === key || item.name === key);
+          if (!node) throw new Error(`Outliner element not found: ${key}`);
+          if (node.locked) throw new Error(`Outliner element is locked: ${key}`);
+          return node;
+        }),
+      ),
+    ];
     Undo.initSelection();
     if (mode === "replace") unselectAll();
     for (const node of nodes) node.select({ ctrlOrCmd: true } as Event);
@@ -285,26 +410,34 @@ new Intent("select_elements", {
 
 new Intent("filter_project_items", {
   category: "blockbench",
-  description: "Find cubes, groups, textures, or animations by name, visibility, and parent group. Returns their UUIDs.",
+  description:
+    "Find cubes, groups, textures, or animations by name, visibility, and parent group. Returns their UUIDs.",
   parameters: [field("items", Type.Enum), field("name"), field("visibility", Type.Enum), field("parent")],
   perform(params) {
     if (!Project) throw new Error("No project is open");
     const collection = text(params.items);
-    const items = collection === "cubes" ? Cube.all
-      : collection === "groups" ? Group.all
-      : collection === "textures" ? Texture.all
-      : collection === "animations" ? animationClass().all
-      : undefined;
+    const items =
+      collection === "cubes"
+        ? Cube.all
+        : collection === "groups"
+          ? Group.all
+          : collection === "textures"
+            ? Texture.all
+            : collection === "animations"
+              ? animationClass().all
+              : undefined;
     if (!items) throw new Error(`Unknown project item collection: ${collection}`);
     const name = text(params.name).toLowerCase();
     const visibility = text(params.visibility);
     const parent = text(params.parent);
-    if (visibility && !["visible", "hidden"].includes(visibility)) throw new Error(`Unknown visibility filter: ${visibility}`);
+    if (visibility && !["visible", "hidden"].includes(visibility))
+      throw new Error(`Unknown visibility filter: ${visibility}`);
     if (visibility && collection === "animations") throw new Error("Animations do not support a visibility filter");
     if (parent && collection === "animations") throw new Error("Animations do not have a parent group");
-    const textureGroup = parent && collection === "textures"
-      ? TextureGroup.all.find((entry) => entry.uuid === parent || entry.name === parent)
-      : undefined;
+    const textureGroup =
+      parent && collection === "textures"
+        ? TextureGroup.all.find((entry) => entry.uuid === parent || entry.name === parent)
+        : undefined;
     const matches = items.filter((item) => {
       if (name && !item.name.toLowerCase().includes(name)) return false;
       const visible = collection === "textures" ? (item as Texture).visible : (item as Cube | Group).visibility;
@@ -314,43 +447,63 @@ new Intent("filter_project_items", {
           if (!textureGroup || (item as Texture).group !== textureGroup.uuid) return false;
         } else {
           const group = (item as Cube | Group).parent;
-          if (parent === "root" ? group !== "root" : group === "root" || (group.uuid !== parent && group.name !== parent)) return false;
+          if (
+            parent === "root" ? group !== "root" : group === "root" || (group.uuid !== parent && group.name !== parent)
+          )
+            return false;
         }
       }
       return true;
     });
     return matches.map((item) => item.uuid);
   },
-}).addEnum("items", ["cubes", "groups", "textures", "animations"])
+})
+  .addEnum("items", ["cubes", "groups", "textures", "animations"])
   .addEnum("visibility", ["", "visible", "hidden"]);
 
 new Intent("get_element_property", {
   category: "blockbench",
   description: "Read a cube or group property. Vectors are returned as three numbers.",
   parameters: [field("element"), field("property", Type.Enum)],
-  perform(params) { return elementProperty(editableElement(params.element), text(params.property)); },
+  perform(params) {
+    return elementProperty(editableElement(params.element), text(params.property));
+  },
 }).addEnum("property", ["name", "visibility", "position", "rotation", "size", "pivot"]);
 
 new Intent("set_element_property", {
   category: "blockbench",
-  description: "Set a cube or group property. Enter vectors as x,y,z. Position moves a cube without changing its size; size applies to cubes only.",
+  description:
+    "Set a cube or group property. Enter vectors as x,y,z. Position moves a cube without changing its size; size applies to cubes only.",
   parameters: [field("element"), field("property", Type.Enum), field("value")],
   perform(params) {
     const element = editableElement(params.element);
     const property = text(params.property);
-    if (!["name", "visibility", "position", "rotation", "size", "pivot"].includes(property)) throw new Error(`Unknown element property: ${property}`);
+    if (!["name", "visibility", "position", "rotation", "size", "pivot"].includes(property))
+      throw new Error(`Unknown element property: ${property}`);
     if (property === "size" && !(element instanceof Cube)) throw new Error("Size is only available for cubes");
-    const value = property === "name" ? text(params.value)
-      : property === "visibility" ? booleanValue(params.value)
-      : vector(params.value, [0, 0, 0]);
+    const value =
+      property === "name"
+        ? text(params.value)
+        : property === "visibility"
+          ? booleanValue(params.value)
+          : vector(params.value, [0, 0, 0]);
     if (property === "name" && !value) throw new Error("Element name is required");
-    if (property === "size" && (value as number[]).some((part) => part < 0)) throw new Error("Cube size cannot be negative");
+    if (property === "size" && (value as number[]).some((part) => part < 0))
+      throw new Error("Cube size cannot be negative");
     Undo.initEdit({ outliner: true, elements: element instanceof Cube ? [element] : [] });
     switch (property) {
-      case "name": element.name = value as string; break;
-      case "visibility": element.visibility = value as boolean; break;
-      case "rotation": element.rotation = value as [number, number, number]; break;
-      case "pivot": element.origin = value as [number, number, number]; break;
+      case "name":
+        element.name = value as string;
+        break;
+      case "visibility":
+        element.visibility = value as boolean;
+        break;
+      case "rotation":
+        element.rotation = value as [number, number, number];
+        break;
+      case "pivot":
+        element.origin = value as [number, number, number];
+        break;
       case "position": {
         const position = value as [number, number, number];
         if (element instanceof Cube) {
@@ -374,7 +527,8 @@ new Intent("set_element_property", {
 }).addEnum("property", ["name", "visibility", "position", "rotation", "size", "pivot"]);
 
 new Intent("set_cube_dimension", {
-  category: "blockbench", parameters: [field("cube"), field("axis", Type.Enum), field("size", Type.Number)],
+  category: "blockbench",
+  parameters: [field("cube"), field("axis", Type.Enum), field("size", Type.Number)],
   perform(params) {
     if (!Project) throw new Error("No project is open");
     const cube = find(Cube.all, params.cube, "Cube");
@@ -391,7 +545,8 @@ new Intent("set_cube_dimension", {
 
 let previousVisibility: Map<string, boolean> | undefined;
 new Intent("set_element_visibility", {
-  category: "blockbench", parameters: [field("element"), field("mode", Type.Enum)],
+  category: "blockbench",
+  parameters: [field("element"), field("mode", Type.Enum)],
   perform(params) {
     if (!Project) throw new Error("No project is open");
     const mode = text(params.mode);
@@ -405,7 +560,9 @@ new Intent("set_element_visibility", {
     }
     const item = find(OutlinerElement.all, params.element, "Element");
     if (mode === "isolate") {
-      previousVisibility ??= new Map(OutlinerElement.all.map((element) => [element.uuid, element.scene_object.visible]));
+      previousVisibility ??= new Map(
+        OutlinerElement.all.map((element) => [element.uuid, element.scene_object.visible]),
+      );
       for (const element of OutlinerElement.all) element.scene_object.visible = element === item;
     } else if (mode === "show" || mode === "hide") item.scene_object.visible = mode === "show";
     else throw new Error(`Unknown visibility mode: ${mode}`);

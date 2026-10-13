@@ -56,7 +56,10 @@ export function parseFlow(steps: IntentData[]): FlowNode[] {
       if (step.type === "if") {
         const yes = sequence(new Set(["otherwise", "end_if"]));
         let no: FlowNode[] = [];
-        if (steps[index]?.type === "otherwise") { index++; no = sequence(new Set(["end_if"])); }
+        if (steps[index]?.type === "otherwise") {
+          index++;
+          no = sequence(new Set(["end_if"]));
+        }
         if (steps[index]?.type !== "end_if") throw new Error("If is missing End If");
         index++;
         nodes.push({ kind: "if", step, yes, no });
@@ -87,8 +90,10 @@ export function expandLegacyBlocks(steps: IntentData[], id: () => string): Inten
     if (typeof value !== "string") return [];
     try {
       const parsed = JSON.parse(value || "[]");
-      return Array.isArray(parsed) ? parsed as IntentData[] : undefined;
-    } catch { return undefined; }
+      return Array.isArray(parsed) ? (parsed as IntentData[]) : undefined;
+    } catch {
+      return undefined;
+    }
   };
   for (let index = 0; index < steps.length; index++) {
     const step = steps[index];
@@ -98,7 +103,10 @@ export function expandLegacyBlocks(steps: IntentData[], id: () => string): Inten
     }
     const children = parse(step.params?.actions);
     const otherwise = step.type === "if" ? parse(step.params?.otherwise) : [];
-    if (!children || !otherwise) { output.push(step); continue; }
+    if (!children || !otherwise) {
+      output.push(step);
+      continue;
+    }
     output.push({ ...step, params: { ...step.params, actions: "", otherwise: "" } });
     output.push(...expandLegacyBlocks(children, id));
     if (step.type === "if") {

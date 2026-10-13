@@ -12,7 +12,17 @@ export interface IntentData {
   params: IntentParameters;
 }
 
-export type IntentResult = boolean | string | number | URL | Date | null | IntentResult[] | { [key: string]: IntentResult } | "__return" | undefined;
+export type IntentResult =
+  | boolean
+  | string
+  | number
+  | URL
+  | Date
+  | null
+  | IntentResult[]
+  | { [key: string]: IntentResult }
+  | "__return"
+  | undefined;
 
 export enum IntentParameterTypes {
   Text = "text",
@@ -94,7 +104,7 @@ export class Intent {
 
   /**
    * Search for intents.
-   * @param {string} query 
+   * @param {string} query
    * @returns {Intent[]}
    */
   static search(query: string): Intent[] {
@@ -170,7 +180,8 @@ export class Intent {
   constructor(id: string, options?: IntentOptions) {
     this.id = id;
     this.options = options ?? { perform: () => undefined };
-    if (new.target === Intent && Object.prototype.hasOwnProperty.call(intentIcons, id)) this.options.icon = intentIcons[id];
+    if (new.target === Intent && Object.prototype.hasOwnProperty.call(intentIcons, id))
+      this.options.icon = intentIcons[id];
     if (!this.options.name) this.options.name = tl(`macros.${this.id}`);
     if (!this.options.description) {
       const key = `macros.${this.id}.desc`;

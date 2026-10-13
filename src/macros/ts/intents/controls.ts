@@ -24,11 +24,11 @@ function isLight(theme: CustomTheme): boolean {
     ? [0, 2, 4].map((offset) => parseInt(hex[1].slice(offset, offset + 2), 16))
     : (normalized.match(/\d+(?:\.\d+)?/g) ?? []).slice(0, 3).map(Number);
   if (channels.length !== 3) throw new Error(`Cannot determine appearance of theme: ${theme.name}`);
-  return (channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722) >= 128;
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722 >= 128;
 }
 
 new Intent("set_appearance", {
-  category: 'controls',
+  category: "controls",
   parameters: [
     {
       name: "op",
@@ -42,15 +42,20 @@ new Intent("set_appearance", {
   perform(params) {
     const current = CustomTheme.selected;
     if (!current) throw new Error("No theme is selected");
-    const mode = params.op === AppearanceOperation.Toggle
-      ? (isLight(current) ? AppearanceMode.Dark : AppearanceMode.Light)
-      : params.mode;
-    if (mode !== AppearanceMode.Dark && mode !== AppearanceMode.Light) throw new Error(`Unknown appearance mode: ${mode}`);
+    const mode =
+      params.op === AppearanceOperation.Toggle
+        ? isLight(current)
+          ? AppearanceMode.Dark
+          : AppearanceMode.Light
+        : params.mode;
+    if (mode !== AppearanceMode.Dark && mode !== AppearanceMode.Light)
+      throw new Error(`Unknown appearance mode: ${mode}`);
     if (isLight(current) === (mode === AppearanceMode.Light)) return current.id;
     const themes = CustomTheme.themes.filter((theme) => !theme.desktop_only || !Blockbench.isWeb);
-    const next = themes.find((theme) => theme.id === mode)
-      ?? themes.find((theme) => theme.source === "built_in" && isLight(theme) === (mode === AppearanceMode.Light))
-      ?? themes.find((theme) => isLight(theme) === (mode === AppearanceMode.Light));
+    const next =
+      themes.find((theme) => theme.id === mode) ??
+      themes.find((theme) => theme.source === "built_in" && isLight(theme) === (mode === AppearanceMode.Light)) ??
+      themes.find((theme) => isLight(theme) === (mode === AppearanceMode.Light));
     if (!next) throw new Error(`No ${mode} theme is available`);
     CustomTheme.loadTheme(next);
     return next.id;
@@ -63,7 +68,7 @@ new Intent("set_appearance", {
   .addEnum("mode", Object.values(AppearanceMode));
 
 new Intent("take_screenshot", {
-  category: 'controls',
+  category: "controls",
   parameters: [
     { name: "source", type: IntentParameterTypes.Enum },
     { name: "width", type: IntentParameterTypes.Number },
@@ -78,14 +83,21 @@ new Intent("take_screenshot", {
     return new Promise<string>((resolve) => {
       const callback = (data: string) => resolve(data);
       switch (params.source) {
-        case "screen": Screencam.fullScreen(options, callback); break;
-        case "2d": Screencam.screenshot2DEditor(options, callback); break;
-        case "clean": Screencam.cleanCanvas(options, callback); break;
+        case "screen":
+          Screencam.fullScreen(options, callback);
+          break;
+        case "2d":
+          Screencam.screenshot2DEditor(options, callback);
+          break;
+        case "clean":
+          Screencam.cleanCanvas(options, callback);
+          break;
         case "preview":
           if (!Preview.selected) throw new Error("No preview is selected");
           Screencam.screenshotPreview(Preview.selected, options, callback);
           break;
-        default: throw new Error(`Unknown screenshot source: ${params.source}`);
+        default:
+          throw new Error(`Unknown screenshot source: ${params.source}`);
       }
     });
   },
@@ -122,7 +134,10 @@ new Intent("save_image", {
     const match = /^data:image\/png;base64,(.+)$/.exec(image);
     if (!match) throw new Error("Expected a PNG image");
     const bytes = Uint8Array.from(atob(match[1]), (character) => character.charCodeAt(0));
-    const name = (String(params.name || "image").replace(/[<>:"/\\|?*\x00-\x1f]/g, "_").trim() || "image") + ".png";
+    const name =
+      (String(params.name || "image")
+        .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
+        .trim() || "image") + ".png";
     const configuredFolder = String(params.folder || "");
     if (configuredFolder.startsWith("browser-folder:")) {
       const folder = browserFolders.get(configuredFolder);
@@ -133,19 +148,30 @@ new Intent("save_image", {
       await stream.close();
       return name;
     }
-    const folder = Blockbench.isWeb ? "" : configuredFolder || (() => {
-      if (imageFolder?.runId === Macros.runId) return imageFolder.folder;
-      const selected = Blockbench.pickDirectory({ title: "Choose output folder" });
-      if (selected) imageFolder = { runId: Macros.runId, folder: selected };
-      return selected;
-    })();
+    const folder = Blockbench.isWeb
+      ? ""
+      : configuredFolder ||
+        (() => {
+          if (imageFolder?.runId === Macros.runId) return imageFolder.folder;
+          const selected = Blockbench.pickDirectory({ title: "Choose output folder" });
+          if (selected) imageFolder = { runId: Macros.runId, folder: selected };
+          return selected;
+        })();
     if (!Blockbench.isWeb && !folder) return undefined;
     if (folder) {
       const path = `${folder.replace(/[\\/]$/, "")}/${name}`;
-      await new Promise<void>((resolve) => Blockbench.writeFile(path, { content: bytes.buffer, savetype: "buffer" }, () => resolve()));
+      await new Promise<void>((resolve) =>
+        Blockbench.writeFile(path, { content: bytes.buffer, savetype: "buffer" }, () => resolve()),
+      );
       return path;
     }
-    Blockbench.export({ type: "PNG Image", extensions: ["png"], name: name.slice(0, -4), content: bytes.buffer, savetype: "buffer" });
+    Blockbench.export({
+      type: "PNG Image",
+      extensions: ["png"],
+      name: name.slice(0, -4),
+      content: bytes.buffer,
+      savetype: "buffer",
+    });
     return name;
   },
 });

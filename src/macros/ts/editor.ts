@@ -28,8 +28,14 @@ function fields(intent: Intent): EditorField[] {
     options: intent.enumValues.get(parameter.name),
   }));
   for (const [name, config] of Object.entries(intent.options.form ?? {})) {
-    if (config === "_" || result.some((field) => field.name === name)) continue;
+    if (config === "_") continue;
     const option = config as { label?: string; type?: string };
+    const existing = result.find((field) => field.name === name);
+    if (existing) {
+      existing.type = option.type ?? existing.type;
+      existing.label = option.label ?? existing.label;
+      continue;
+    }
     result.push({ name, label: option.label ?? label(name), type: option.type ?? "text" });
   }
   return result;
@@ -58,11 +64,12 @@ export const MacroEditor = defineComponent({
     },
     actions(): Intent[] {
       const query = this.search.trim().toLowerCase();
-      return [...Intent.all.values()].filter((intent) =>
-        Intent.canPerform(intent.id) &&
-        !BLOCK_MARKERS.has(intent.id) &&
-        (!this.category || intent.options.category === this.category) &&
-        (!query || `${intent.getName()} ${intent.options.description ?? ""}`.toLowerCase().includes(query))
+      return [...Intent.all.values()].filter(
+        (intent) =>
+          Intent.canPerform(intent.id) &&
+          !BLOCK_MARKERS.has(intent.id) &&
+          (!this.category || intent.options.category === this.category) &&
+          (!query || `${intent.getName()} ${intent.options.description ?? ""}`.toLowerCase().includes(query)),
       );
     },
     depths(): number[] {
@@ -93,9 +100,23 @@ export const MacroEditor = defineComponent({
     fieldsForStep(step: IntentData, index: number): EditorField[] {
       const intent = this.action(step);
       if (!intent || BLOCK_MARKERS.has(step.type)) return [];
+      if (
+        step.type === "add_cube" &&
+        ("from" in step.params || "to" in step.params) &&
+        !("position" in step.params || "size" in step.params)
+      ) {
+        return fields(intent).map((field) =>
+          field.name === "position"
+            ? { ...field, name: "from", label: "From" }
+            : field.name === "size"
+              ? { ...field, name: "to", label: "To" }
+              : field,
+        );
+      }
       const all = fields(intent);
       return BLOCK_END[step.type] && matchingEnd(this.macro.intents, index) > index
-        ? all.filter((field) => field.name !== "actions" && field.name !== "otherwise") : all;
+        ? all.filter((field) => field.name !== "actions" && field.name !== "otherwise")
+        : all;
     },
     isMarker(step: IntentData): boolean {
       return BLOCK_MARKERS.has(step.type);
@@ -156,25 +177,38 @@ export const MacroEditor = defineComponent({
       const value = (event.target as HTMLInputElement).value;
       this.setParam(step, field.name, field.type === "number" && value !== "" ? Number(value) : value);
     },
+    vectorValue(value: unknown, axis: number): number {
+      const parts = Array.isArray(value) ? value : typeof value === "string" ? value.trim().split(/[\s,]+/) : [];
+      const number = Number(parts[axis]);
+      return parts.length === 3 && Number.isFinite(number) ? number : 0;
+    },
+    updateVector(step: IntentData, field: EditorField, axis: number, event: Event): void {
+      const values = [0, 1, 2].map((index) => this.vectorValue(step.params[field.name], index));
+      values[axis] = Number((event.target as HTMLInputElement).value);
+      this.$set(step.params, field.name, values);
+    },
     add(intent: Intent, index = this.insertAt ?? this.macro.intents.length): void {
       const params: IntentData["params"] = {};
       for (const field of fields(intent)) {
         const formOption = intent.options.form?.[field.name];
         const defaultValue = formOption && formOption !== "_" ? formOption.value : undefined;
-        params[field.name] = typeof defaultValue === "boolean" || typeof defaultValue === "number" || typeof defaultValue === "string"
-          ? defaultValue : field.options?.length ? field.options[0]
-          : field.type === IntentParameterTypes.Boolean || field.type === "checkbox" ? false
-          : field.type === IntentParameterTypes.Number || field.type === "number" ? 0 : "";
+        params[field.name] = Array.isArray(defaultValue)
+          ? [...defaultValue]
+          : typeof defaultValue === "boolean" || typeof defaultValue === "number" || typeof defaultValue === "string"
+            ? defaultValue
+            : field.options?.length
+              ? field.options[0]
+              : field.type === IntentParameterTypes.Boolean || field.type === "checkbox"
+                ? false
+                : field.type === IntentParameterTypes.Number || field.type === "number"
+                  ? 0
+                  : "";
       }
       const steps: IntentData[] = [{ type: intent.id, uuid: guid(), params }];
-      if (intent.id === "if") steps.push(
-        { type: "otherwise", uuid: guid(), params: {} },
-        { type: "end_if", uuid: guid(), params: {} },
-      );
-      else if (intent.id === "try") steps.push(
-        { type: "on_error", uuid: guid(), params: {} },
-        { type: "end_try", uuid: guid(), params: {} },
-      );
+      if (intent.id === "if")
+        steps.push({ type: "otherwise", uuid: guid(), params: {} }, { type: "end_if", uuid: guid(), params: {} });
+      else if (intent.id === "try")
+        steps.push({ type: "on_error", uuid: guid(), params: {} }, { type: "end_try", uuid: guid(), params: {} });
       else if (BLOCK_END[intent.id]) steps.push({ type: BLOCK_END[intent.id], uuid: guid(), params: {} });
       this.macro.intents.splice(index, 0, ...steps);
       if (this.insertAt !== null) this.insertAt = index + steps.length;
@@ -193,15 +227,28 @@ export const MacroEditor = defineComponent({
       this.insertAt = null;
     },
     move(from: number, insertionIndex: number): void {
-      if (from < 0 || insertionIndex < 0 || insertionIndex > this.macro.intents.length || BLOCK_MARKERS.has(this.macro.intents[from]?.type)) return;
+      if (
+        from < 0 ||
+        insertionIndex < 0 ||
+        insertionIndex > this.macro.intents.length ||
+        BLOCK_MARKERS.has(this.macro.intents[from]?.type)
+      )
+        return;
       const end = matchingEnd(this.macro.intents, from);
       if (insertionIndex >= from && insertionIndex <= end + 1) return;
       const segment = this.macro.intents.splice(from, end - from + 1);
-      this.macro.intents.splice(insertionIndex > from ? insertionIndex - segment.length : insertionIndex, 0, ...segment);
+      this.macro.intents.splice(
+        insertionIndex > from ? insertionIndex - segment.length : insertionIndex,
+        0,
+        ...segment,
+      );
       this.insertAt = null;
     },
     startDrag(index: number, event: DragEvent): void {
-      if (BLOCK_MARKERS.has(this.macro.intents[index].type)) { event.preventDefault(); return; }
+      if (BLOCK_MARKERS.has(this.macro.intents[index].type)) {
+        event.preventDefault();
+        return;
+      }
       this.dragging = index;
       this.libraryDragging = null;
       this.dropIndex = null;
@@ -220,12 +267,16 @@ export const MacroEditor = defineComponent({
       const bounds = (event.currentTarget as HTMLElement).getBoundingClientRect();
       const insertionIndex = index + (event.clientY >= bounds.top + bounds.height / 2 ? 1 : 0);
       const end = this.dragging >= 0 ? matchingEnd(this.macro.intents, this.dragging) : -1;
-      this.dropIndex = !this.libraryDragging && insertionIndex >= this.dragging && insertionIndex <= end + 1 ? null : insertionIndex;
+      this.dropIndex =
+        !this.libraryDragging && insertionIndex >= this.dragging && insertionIndex <= end + 1 ? null : insertionIndex;
       if (event.dataTransfer) event.dataTransfer.dropEffect = this.libraryDragging ? "copy" : "move";
     },
     dragOverEnd(event: DragEvent): void {
       if (this.dragging < 0 && !this.libraryDragging) return;
-      this.dropIndex = !this.libraryDragging && matchingEnd(this.macro.intents, this.dragging) === this.macro.intents.length - 1 ? null : this.macro.intents.length;
+      this.dropIndex =
+        !this.libraryDragging && matchingEnd(this.macro.intents, this.dragging) === this.macro.intents.length - 1
+          ? null
+          : this.macro.intents.length;
       if (event.dataTransfer) event.dataTransfer.dropEffect = this.libraryDragging ? "copy" : "move";
     },
     leaveWorkflow(event: DragEvent): void {
@@ -307,6 +358,7 @@ export const MacroEditor = defineComponent({
               <div v-else class="macro_editor_value">
                 <input v-if="field.type === 'boolean' || field.type === 'checkbox'" type="checkbox" v-model="step.params[field.name]" @focus="showSuggestions(step, field.name, $event)" @blur="hideSuggestions(step, field.name)">
                 <select v-else-if="field.options && field.options.length" class="dark_bordered" v-model="step.params[field.name]" @focus="showSuggestions(step, field.name, $event)" @blur="hideSuggestions(step, field.name)"><option v-for="option in field.options" :key="option" :value="option">{{ option }}</option></select>
+                <div v-else-if="field.type === 'vector'" class="macro_editor_vector"><input v-for="(axis, axisIndex) in ['X', 'Y', 'Z']" :key="axis" class="dark_bordered" type="number" step="any" :aria-label="field.label + ' ' + axis" :title="axis" :value="vectorValue(step.params[field.name], axisIndex)" @input="updateVector(step, field, axisIndex, $event)" @focus="showSuggestions(step, field.name, $event)" @blur="hideSuggestions(step, field.name)"></div>
                 <input v-else class="dark_bordered" :type="field.type === 'number' ? 'number' : 'text'" :value="step.params[field.name]" :placeholder="field.name" @input="updateParam(step, field, $event)" @focus="showSuggestions(step, field.name, $event)" @blur="hideSuggestions(step, field.name)">
                 <button type="button" class="macro_editor_insert_variable" title="Choose variable" aria-label="Choose variable" @mousedown.prevent @click="showSuggestions(step, field.name, $event)"><i class="material-icons">input</i></button>
               </div>

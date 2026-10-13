@@ -6,19 +6,33 @@ import path from "node:path";
 import vm from "node:vm";
 
 const require = createRequire(import.meta.url);
-const source = readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), "../ts/intents/blockbench.ts"), "utf8");
+const source = readFileSync(
+  path.join(path.dirname(fileURLToPath(import.meta.url)), "../ts/intents/blockbench.ts"),
+  "utf8",
+);
 
 test("get and set cube or group properties with undo", () => {
   const intents = new Map();
   class Intent {
-    constructor(id, options) { intents.set(id, options); }
-    addEnum() { return this; }
+    constructor(id, options) {
+      intents.set(id, options);
+    }
+    addEnum() {
+      return this;
+    }
   }
   class Cube {
     static all = [];
     constructor() {
-      Object.assign(this, { uuid: "cube-1", name: "Box", visibility: true,
-        from: [1, 2, 3], to: [3, 5, 7], origin: [0, 0, 0], rotation: [0, 0, 0] });
+      Object.assign(this, {
+        uuid: "cube-1",
+        name: "Box",
+        visibility: true,
+        from: [1, 2, 3],
+        to: [3, 5, 7],
+        origin: [0, 0, 0],
+        rotation: [0, 0, 0],
+      });
     }
   }
   const cube = new Cube();
@@ -27,14 +41,26 @@ test("get and set cube or group properties with undo", () => {
   const edits = [];
   const context = vm.createContext({
     exports: {},
-    require: (id) => id === "../intent" ? { Intent, IntentParameterTypes: { Text: "text", Enum: "enum", Number: "number" } } : undefined,
-    Project: {}, Cube, Group: { all: [group] },
-    Undo: { initEdit: (details) => edits.push(["start", details]), finishEdit: (label) => edits.push(["finish", label]) },
+    require: (id) =>
+      id === "../intent"
+        ? { Intent, IntentParameterTypes: { Text: "text", Enum: "enum", Number: "number" } }
+        : undefined,
+    Project: {},
+    Cube,
+    Group: { all: [group] },
+    Undo: {
+      initEdit: (details) => edits.push(["start", details]),
+      finishEdit: (label) => edits.push(["finish", label]),
+    },
     Canvas: { updateAll: () => edits.push(["update"]) },
   });
   context.globalThis = context;
   const ts = require("typescript");
-  vm.runInContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, context);
+  vm.runInContext(
+    ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } })
+      .outputText,
+    context,
+  );
   const get = intents.get("get_element_property").perform;
   const set = intents.get("set_element_property").perform;
 

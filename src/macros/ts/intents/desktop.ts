@@ -3,7 +3,7 @@
 import { Intent, IntentParameterTypes as Type, IntentResult } from "../intent";
 
 const field = (name: string, type: Type = Type.Text) => ({ name, type });
-const value = (input: IntentResult, previous: IntentResult) => input === undefined || input === "" ? previous : input;
+const value = (input: IntentResult, previous: IntentResult) => (input === undefined || input === "" ? previous : input);
 const string = (input: IntentResult) => String(input ?? "").trim();
 
 function node() {
@@ -32,8 +32,15 @@ function paths(input: IntentResult): string[] {
 function stats(path: string) {
   const { fs } = node();
   const stat = fs.statSync(path);
-  return { path, name: node().path.basename(path), size: stat.size, isDirectory: stat.isDirectory(),
-    created: stat.birthtime.toISOString(), modified: stat.mtime.toISOString(), extension: node().path.extname(path) };
+  return {
+    path,
+    name: node().path.basename(path),
+    size: stat.size,
+    isDirectory: stat.isDirectory(),
+    created: stat.birthtime.toISOString(),
+    modified: stat.mtime.toISOString(),
+    extension: node().path.extname(path),
+  };
 }
 
 function optionalNumber(input: IntentResult, label: string, fallback: number): number {
@@ -53,8 +60,11 @@ function optionalDate(input: IntentResult, label: string, fallback: number, endO
 function namePattern(input: IntentResult): RegExp | undefined {
   const pattern = string(input);
   if (!pattern) return;
-  const source = Array.from(pattern).map((character) => character === "*" ? ".*" : character === "?" ? "."
-    : character.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&")).join("");
+  const source = Array.from(pattern)
+    .map((character) =>
+      character === "*" ? ".*" : character === "?" ? "." : character.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&"),
+    )
+    .join("");
   return new RegExp(`^${source}$`, "i");
 }
 
@@ -66,17 +76,27 @@ function run(command: string, args: string[]): void {
 }
 
 new Intent("select_file", {
-  category: "desktop", variant: "desktop", parameters: [field("file")],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("file")],
   perform(params) {
     const file = string(params.file);
-    if (file) { node().fs.accessSync(file); return file; }
-    return new Promise((resolve) => Blockbench.import({ type: "File", extensions: ["*"], readtype: "buffer", multiple: false },
-      (files) => resolve(files?.[0]?.path || undefined)));
+    if (file) {
+      node().fs.accessSync(file);
+      return file;
+    }
+    return new Promise((resolve) =>
+      Blockbench.import({ type: "File", extensions: ["*"], readtype: "buffer", multiple: false }, (files) =>
+        resolve(files?.[0]?.path || undefined),
+      ),
+    );
   },
 });
 
 new Intent("move_file", {
-  category: "desktop", variant: "desktop", parameters: [field("src"), field("dest")],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("src"), field("dest")],
   perform(params, _macro, result) {
     const { fs, path } = node();
     const src = required(value(params.src, result), "Source file");
@@ -88,7 +108,9 @@ new Intent("move_file", {
 });
 
 new Intent("rename_file", {
-  category: "desktop", variant: "desktop", parameters: [field("file"), field("name")],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("file"), field("name")],
   perform(params, _macro, result) {
     const { fs, path } = node();
     const file = required(value(params.file, result), "File");
@@ -101,17 +123,25 @@ new Intent("rename_file", {
 });
 
 new Intent("save_file", {
-  category: "desktop", variant: "desktop", parameters: [field("file"), field("content")],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("file"), field("content")],
   perform(params, _macro, result) {
     const file = required(params.file, "File path");
     const content = value(params.content, result);
-    node().fs.writeFileSync(file, typeof content === "string" ? content : JSON.stringify(content ?? "", null, 2), "utf8");
+    node().fs.writeFileSync(
+      file,
+      typeof content === "string" ? content : JSON.stringify(content ?? "", null, 2),
+      "utf8",
+    );
     return file;
   },
 });
 
 new Intent("delete_file", {
-  category: "desktop", variant: "desktop", parameters: [field("file")],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("file")],
   perform(params, _macro, result) {
     const file = required(value(params.file, result), "File");
     node().fs.unlinkSync(file);
@@ -120,7 +150,9 @@ new Intent("delete_file", {
 });
 
 new Intent("create_folder", {
-  category: "desktop", variant: "desktop", parameters: [field("name"), field("path")],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("name"), field("path")],
   perform(params) {
     const { fs, path } = node();
     const name = required(params.name, "Folder name");
@@ -131,7 +163,9 @@ new Intent("create_folder", {
 });
 
 new Intent("get_contents_of_folder", {
-  category: "desktop", variant: "desktop", parameters: [field("folder")],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("folder")],
   perform(params, _macro, result) {
     const { fs, path } = node();
     const folder = required(value(params.folder, result), "Folder");
@@ -140,10 +174,20 @@ new Intent("get_contents_of_folder", {
 });
 
 new Intent("find_files", {
-  category: "desktop", variant: "desktop",
-  description: "Find files in a folder. Name Pattern uses * and ? wildcards; size is in bytes and modified dates are inclusive.",
-  parameters: [field("folder"), field("recursive", Type.Boolean), field("name_pattern"), field("extension"),
-    field("min_size", Type.Number), field("max_size", Type.Number), field("modified_after", Type.Date), field("modified_before", Type.Date)],
+  category: "desktop",
+  variant: "desktop",
+  description:
+    "Find files in a folder. Name Pattern uses * and ? wildcards; size is in bytes and modified dates are inclusive.",
+  parameters: [
+    field("folder"),
+    field("recursive", Type.Boolean),
+    field("name_pattern"),
+    field("extension"),
+    field("min_size", Type.Number),
+    field("max_size", Type.Number),
+    field("modified_after", Type.Date),
+    field("modified_before", Type.Date),
+  ],
   perform(params, _macro, result) {
     const { fs, path } = node();
     const folder = path.resolve(required(value(params.folder, result), "Folder"));
@@ -164,7 +208,10 @@ new Intent("find_files", {
       const current = pending.pop()!;
       for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
         const file = path.join(current, entry.name);
-        if (entry.isDirectory()) { if (recursive) pending.push(file); continue; }
+        if (entry.isDirectory()) {
+          if (recursive) pending.push(file);
+          continue;
+        }
         if (!entry.isFile()) continue;
         if (pattern && !pattern.test(entry.name)) continue;
         if (extension && path.extname(entry.name).toLowerCase() !== extension) continue;
@@ -178,21 +225,26 @@ new Intent("find_files", {
 });
 
 new Intent("get_file_from_folder", {
-  category: "desktop", variant: "desktop", parameters: [field("folder"), field("name")],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("folder"), field("name")],
   perform(params, _macro, result) {
     const { fs, path } = node();
     const folder = required(value(params.folder, result), "Folder");
     const name = required(params.name, "File name");
     const file = path.resolve(folder, name);
     const relative = path.relative(path.resolve(folder), file);
-    if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) throw new Error("File must be inside the folder");
+    if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative))
+      throw new Error("File must be inside the folder");
     fs.accessSync(file);
     return file;
   },
 });
 
 new Intent("append_to_text_file", {
-  category: "desktop", variant: "desktop", parameters: [field("name"), field("text"), field("operation", Type.Enum)],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("name"), field("text"), field("operation", Type.Enum)],
   perform(params, _macro, result) {
     const file = required(params.name, "Text file");
     const text = String(value(params.text, result) ?? "");
@@ -207,7 +259,9 @@ new Intent("append_to_text_file", {
 }).addEnum("operation", ["append", "prepend"]);
 
 new Intent("make_archive", {
-  category: "desktop", variant: "desktop", parameters: [field("input"), field("output"), field("type", Type.Enum)],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("input"), field("output"), field("type", Type.Enum)],
   perform(params, _macro, result) {
     const { fs, path } = node();
     const inputs = paths(value(params.input, result));
@@ -219,7 +273,8 @@ new Intent("make_archive", {
     for (const input of inputs) fs.accessSync(input);
     const root = path.dirname(path.resolve(inputs[0]));
     const members = inputs.map((input) => path.relative(root, path.resolve(input)));
-    if (members.some((member) => member.startsWith("..") || path.isAbsolute(member))) throw new Error("Archive inputs must share a parent folder");
+    if (members.some((member) => member.startsWith("..") || path.isAbsolute(member)))
+      throw new Error("Archive inputs must share a parent folder");
     const flag = type === "zip" ? "-a" : type === "tar.gz" || type === "tgz" ? "-z" : "";
     run("tar", [...(flag ? [flag] : []), "-cf", output, "-C", root, ...members]);
     return output;
@@ -227,7 +282,9 @@ new Intent("make_archive", {
 }).addEnum("type", ["zip", "tar", "tar.gz", "tgz"]);
 
 new Intent("extract_archive", {
-  category: "desktop", variant: "desktop", parameters: [field("archive"), field("destination")],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("archive"), field("destination")],
   perform(params, _macro, result) {
     const { fs, path } = node();
     const archive = path.resolve(required(value(params.archive, result), "Archive"));
@@ -239,7 +296,9 @@ new Intent("extract_archive", {
 });
 
 new Intent("open_file", {
-  category: "desktop", variant: "desktop", parameters: [field("file"), field("app")],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("file"), field("app")],
   async perform(params, _macro, result) {
     const { fs, child } = node();
     const file = required(value(params.file, result), "File");
@@ -262,7 +321,9 @@ new Intent("open_file", {
 });
 
 new Intent("get_details_of_files", {
-  category: "desktop", variant: "desktop", parameters: [field("file"), field("detail", Type.Enum)],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [field("file"), field("detail", Type.Enum)],
   perform(params, _macro, result) {
     const files = paths(value(params.file, result));
     if (!files.length) throw new Error("File is required");
@@ -277,7 +338,15 @@ new Intent("get_details_of_files", {
 }).addEnum("detail", ["path", "name", "size", "isDirectory", "created", "modified", "extension"]);
 
 new Intent("filter_files", {
-  category: "desktop", variant: "desktop", parameters: [field("file"), field("name"), field("extension"), field("min_size", Type.Number), field("max_size", Type.Number)],
+  category: "desktop",
+  variant: "desktop",
+  parameters: [
+    field("file"),
+    field("name"),
+    field("extension"),
+    field("min_size", Type.Number),
+    field("max_size", Type.Number),
+  ],
   perform(params, _macro, result) {
     const files = paths(value(params.file, result));
     const name = string(params.name).toLowerCase();
@@ -287,8 +356,12 @@ new Intent("filter_files", {
     if (Number.isNaN(min) || Number.isNaN(max)) throw new Error("File size must be a number");
     return files.filter((file) => {
       const info = stats(file);
-      return (!name || info.name.toLowerCase().includes(name)) && (!extension || info.extension.toLowerCase() === extension)
-        && info.size >= min && info.size <= max;
+      return (
+        (!name || info.name.toLowerCase().includes(name)) &&
+        (!extension || info.extension.toLowerCase() === extension) &&
+        info.size >= min &&
+        info.size <= max
+      );
     });
   },
 });

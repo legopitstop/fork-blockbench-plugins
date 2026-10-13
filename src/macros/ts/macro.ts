@@ -17,6 +17,7 @@ export interface MacroData {
 export abstract class Macros {
   static isRunning: boolean = false;
   static runId = 0;
+  static watchdogSeconds = 60;
   static selected?: MacroData = undefined;
   static all: MacroData[] = [];
   static draft = reactive<MacroData>({ name: "", icon: "play_arrow", intents: [] });
@@ -29,23 +30,30 @@ export abstract class Macros {
     Macros.selected = selected;
 
     new Menu([
-      ...(Macros.canRun(selected) ? [{
-        name: "Run",
-        icon: "play_arrow",
-        click: () => {
-          Blockbench.showMessageBox({
-            title: "Run Macro",
-            message: `Run "${selected.name}"?`,
-            buttons: ["macro.run", "dialog.cancel"],
-            confirm: 0,
-            cancel: 1,
-          }, (button) => {
-            if (button !== 0) return;
-            const index = Macros.all.indexOf(selected);
-            if (index !== -1) Macros.run(index);
-          });
-        },
-      }] : []),
+      ...(Macros.canRun(selected)
+        ? [
+            {
+              name: "Run",
+              icon: "play_arrow",
+              click: () => {
+                Blockbench.showMessageBox(
+                  {
+                    title: "Run Macro",
+                    message: `Run "${selected.name}"?`,
+                    buttons: ["macro.run", "dialog.cancel"],
+                    confirm: 0,
+                    cancel: 1,
+                  },
+                  (button) => {
+                    if (button !== 0) return;
+                    const index = Macros.all.indexOf(selected);
+                    if (index !== -1) Macros.run(index);
+                  },
+                );
+              },
+            },
+          ]
+        : []),
       {
         name: "Edit",
         icon: "edit",
@@ -67,7 +75,8 @@ export abstract class Macros {
             step.uuid = ids.get(step.uuid)!;
             for (const [field, value] of Object.entries(step.params)) {
               const reference = parseInputVariable(value);
-              if (reference && ids.has(reference.uuid)) step.params[field] = inputVariable(ids.get(reference.uuid)!, reference.field);
+              if (reference && ids.has(reference.uuid))
+                step.params[field] = inputVariable(ids.get(reference.uuid)!, reference.field);
             }
           }
           const index = Macros.all.indexOf(selected);
@@ -93,20 +102,23 @@ export abstract class Macros {
         name: "Delete",
         icon: "delete",
         click: () => {
-          Blockbench.showMessageBox({
-            title: "Delete Macro",
-            message: `Delete "${selected.name}"?`,
-            buttons: ["dialog.delete", "dialog.cancel"],
-            confirm: 0,
-            cancel: 1,
-          }, (button) => {
-            if (button !== 0) return;
-            const index = Macros.all.indexOf(selected);
-            if (index === -1) return;
-            Macros.all.splice(index, 1);
-            if (Macros.selected === selected) Macros.selected = undefined;
-            Macros.save();
-          });
+          Blockbench.showMessageBox(
+            {
+              title: "Delete Macro",
+              message: `Delete "${selected.name}"?`,
+              buttons: ["dialog.delete", "dialog.cancel"],
+              confirm: 0,
+              cancel: 1,
+            },
+            (button) => {
+              if (button !== 0) return;
+              const index = Macros.all.indexOf(selected);
+              if (index === -1) return;
+              Macros.all.splice(index, 1);
+              if (Macros.selected === selected) Macros.selected = undefined;
+              Macros.save();
+            },
+          );
         },
       },
     ]).open(event);
@@ -147,7 +159,9 @@ export abstract class Macros {
     ] as const;
     let changed = false;
     for (const macro of Macros.all) {
-      const upgrade = upgrades.find(([preset]) => preset.name === macro.name || (preset === PRESET_3 && macro.name === "Render Items"));
+      const upgrade = upgrades.find(
+        ([preset]) => preset.name === macro.name || (preset === PRESET_3 && macro.name === "Render Items"),
+      );
       if (!upgrade) continue;
       const [preset, uuid] = upgrade;
       const oldRenderIntents = [
@@ -155,20 +169,34 @@ export abstract class Macros {
         ["set_variable", "f5f9795d-267f-4507-b13e-1d7c1d25354e", { name: "render_items", input: "$result" }],
         ["choose_output_folder", "6d40a245-3907-42b0-aa0b-96453af24669", {}],
         ["set_variable", "94e3dd0b-f36d-4538-839c-e55a28f09439", { name: "render_folder", input: "$result" }],
-        ["repeat_each", "95ab83b2-7c9d-488c-8ea4-eb83dbe6da22", { items: "$input:f5f9795d-267f-4507-b13e-1d7c1d25354e:input" }],
+        [
+          "repeat_each",
+          "95ab83b2-7c9d-488c-8ea4-eb83dbe6da22",
+          { items: "$input:f5f9795d-267f-4507-b13e-1d7c1d25354e:input" },
+        ],
         ["set_element_visibility", "9d575951-b103-4d97-b82e-62316214aba6", { element: "$item", mode: "isolate" }],
         ["take_screenshot", "4ccf70e3-aae2-4d5e-a6f7-c2e190535d96", { source: "clean" }],
-        ["save_image", "6e395c6a-3fd2-49c3-a277-9ae7e3bb3ff5", { image: "$result", name: "$item", folder: "$input:94e3dd0b-f36d-4538-839c-e55a28f09439:input" }],
+        [
+          "save_image",
+          "6e395c6a-3fd2-49c3-a277-9ae7e3bb3ff5",
+          { image: "$result", name: "$item", folder: "$input:94e3dd0b-f36d-4538-839c-e55a28f09439:input" },
+        ],
         ["end_repeat_each", "9d4d4971-28b7-420c-9f03-3c823cfaeea9", {}],
         ["set_element_visibility", "963d7cf9-aeec-47c4-a813-d65db81881ce", { mode: "restore" }],
       ] as const;
-      if (macro.name === "Render Items" && macro.intents.length === oldRenderIntents.length &&
+      if (
+        macro.name === "Render Items" &&
+        macro.intents.length === oldRenderIntents.length &&
         macro.intents.every((step, index) => {
           const [type, id, params] = oldRenderIntents[index];
-          return step.type === type && step.uuid === id &&
+          return (
+            step.type === type &&
+            step.uuid === id &&
             Object.keys(step.params).length === Object.keys(params).length &&
-            Object.entries(params).every(([key, value]) => step.params[key] === value);
-        })) {
+            Object.entries(params).every(([key, value]) => step.params[key] === value)
+          );
+        })
+      ) {
         macro.name = preset.name;
         macro.intents.splice(0, macro.intents.length, ...JSON.parse(JSON.stringify(preset.intents)));
         changed = true;
@@ -183,14 +211,22 @@ export abstract class Macros {
         ["end_repeat_each", "9d4d4971-28b7-420c-9f03-3c823cfaeea9"],
         ["set_element_visibility", "963d7cf9-aeec-47c4-a813-d65db81881ce"],
       ];
-      if (macro.name === "Render Items" && macro.intents.length === oldRenderSteps.length &&
-        macro.intents.every((step, index) => step.type === oldRenderSteps[index][0] && step.uuid === oldRenderSteps[index][1]) &&
+      if (
+        macro.name === "Render Items" &&
+        macro.intents.length === oldRenderSteps.length &&
+        macro.intents.every(
+          (step, index) => step.type === oldRenderSteps[index][0] && step.uuid === oldRenderSteps[index][1],
+        ) &&
         macro.intents[0].params.items === "selected_elements" &&
         macro.intents[1].params.items === "$result" &&
-        macro.intents[2].params.element === "$item" && macro.intents[2].params.mode === "isolate" &&
+        macro.intents[2].params.element === "$item" &&
+        macro.intents[2].params.mode === "isolate" &&
         macro.intents[3].params.source === "clean" &&
-        macro.intents[4].params.image === "$result" && macro.intents[4].params.name === "$item" && macro.intents[4].params.folder === "" &&
-        macro.intents[6].params.mode === "restore") {
+        macro.intents[4].params.image === "$result" &&
+        macro.intents[4].params.name === "$item" &&
+        macro.intents[4].params.folder === "" &&
+        macro.intents[6].params.mode === "restore"
+      ) {
         macro.intents.splice(0, macro.intents.length, ...JSON.parse(JSON.stringify(preset.intents)));
         macro.name = preset.name;
         changed = true;
@@ -201,13 +237,20 @@ export abstract class Macros {
         "Randomize Height": "randomize_cube_height",
         "Render Items": "render_selected_items",
       };
-      if (macro.intents.length === 1 && macro.intents[0].uuid === uuid && macro.intents[0].type === oldTypes[macro.name]) {
+      if (
+        macro.intents.length === 1 &&
+        macro.intents[0].uuid === uuid &&
+        macro.intents[0].type === oldTypes[macro.name]
+      ) {
         macro.intents.splice(0, 1, ...JSON.parse(JSON.stringify(preset.intents)));
         macro.name = preset.name;
         changed = true;
         continue;
       }
-      const step = macro.intents.find((intent) => intent.uuid === uuid && intent.type === "show_content" && intent.params?.text === "Not implemented!");
+      const step = macro.intents.find(
+        (intent) =>
+          intent.uuid === uuid && intent.type === "show_content" && intent.params?.text === "Not implemented!",
+      );
       if (!step) continue;
       macro.intents.splice(macro.intents.indexOf(step), 1, ...JSON.parse(JSON.stringify(preset.intents)));
       macro.name = preset.name;
@@ -229,17 +272,31 @@ export abstract class Macros {
         const data: unknown = JSON.parse(String(files[0].content));
         if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Invalid macro file");
         const macro = data as Partial<MacroData>;
-        if (typeof macro.name !== "string" || !macro.name.trim() || typeof macro.icon !== "string" ||
-          !Array.isArray(macro.intents) || macro.intents.some((step) =>
-            !step || typeof step.type !== "string" || typeof step.uuid !== "string" ||
-            !step.params || typeof step.params !== "object" || Array.isArray(step.params))) {
+        if (
+          typeof macro.name !== "string" ||
+          !macro.name.trim() ||
+          typeof macro.icon !== "string" ||
+          !Array.isArray(macro.intents) ||
+          macro.intents.some(
+            (step) =>
+              !step ||
+              typeof step.type !== "string" ||
+              typeof step.uuid !== "string" ||
+              !step.params ||
+              typeof step.params !== "object" ||
+              Array.isArray(step.params),
+          )
+        ) {
           throw new Error("Invalid macro file");
         }
         const imported: MacroData = { name: macro.name, icon: macro.icon, intents: macro.intents };
         Macros.all.push(imported);
         Macros.save();
       } catch (error) {
-        Blockbench.showMessageBox({ title: "Import Macro", message: error instanceof Error ? error.message : String(error) });
+        Blockbench.showMessageBox({
+          title: "Import Macro",
+          message: error instanceof Error ? error.message : String(error),
+        });
       }
     });
   }
@@ -319,49 +376,87 @@ export abstract class Macros {
     }
     if (!macro.intents) return;
     this.isRunning = true;
-    this.runId++;
+    const runId = ++this.runId;
     this.result = undefined;
     this.lastOutput = undefined;
     Blockbench.showQuickMessage("message.run_macro");
     Blockbench.setProgress(0);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const seconds = Number(this.watchdogSeconds);
+    const timeout =
+      Number.isFinite(seconds) && seconds > 0
+        ? new Promise<never>((_, reject) => {
+            timer = setTimeout(() => {
+              this.runId++;
+              this.executionStack = [];
+              reject(new Error(`Macro exceeded the ${seconds} second watchdog limit and was stopped.`));
+            }, seconds * 1000);
+          })
+        : undefined;
     try {
-      this.result = await this.executeMacro(macro, undefined);
+      this.result = await (timeout
+        ? Promise.race([this.executeMacro(macro, undefined), timeout])
+        : this.executeMacro(macro, undefined));
     } catch (error) {
       console.error("Macro failed", error);
-      Blockbench.showMessageBox({ title: macro.name || "Macro", message: error instanceof Error ? error.message : String(error) });
+      Blockbench.showMessageBox({
+        title: macro.name || "Macro",
+        message: error instanceof Error ? error.message : String(error),
+      });
     } finally {
+      if (timer !== undefined) clearTimeout(timer);
       this.isRunning = false;
       Blockbench.setProgress(0);
     }
   }
 
   static async executeMacro(macro: MacroData, input: IntentResult): Promise<IntentResult> {
-    if (this.executionStack.includes(macro)) throw new Error(`Macro recursion detected: ${macro.name}`);
-    if (this.executionStack.length >= 8) throw new Error("Macro calls are nested too deeply");
+    const runId = this.runId;
+    const stack = this.executionStack;
+    const checkStopped = () => {
+      if (runId !== this.runId) throw new Error("Macro stopped");
+    };
+    if (stack.includes(macro)) throw new Error(`Macro recursion detected: ${macro.name}`);
+    if (stack.length >= 8) throw new Error("Macro calls are nested too deeply");
     if (!this.canRun(macro)) throw new Error(`Macro has unavailable actions: ${macro.name}`);
-    this.executionStack.push(macro);
+    stack.push(macro);
     const total = macro.intents.length;
     let c = 0;
     const previousInputs = new Map<string, IntentParameters>();
     let currentResult = input;
     try {
-      const resolveStep = async (step: IntentData, item?: IntentResult, iteration?: number): Promise<IntentParameters | null> => {
-        const raw = Object.fromEntries(Object.entries(step.params ?? {}).map(([key, value]) => [key,
-          value === "$item" ? item : value === "$index" ? iteration : value]));
+      const resolveStep = async (
+        step: IntentData,
+        item?: IntentResult,
+        iteration?: number,
+      ): Promise<IntentParameters | null> => {
+        const raw = Object.fromEntries(
+          Object.entries(step.params ?? {}).map(([key, value]) => [
+            key,
+            value === "$item" ? item : value === "$index" ? iteration : value,
+          ]),
+        );
         const params = await this.resolveParams(raw, previousInputs, macro, currentResult);
         if (params) previousInputs.set(step.uuid, params);
         return params;
       };
-      const execute = async (nodes: FlowNode[], depth = 0, item?: IntentResult, iteration?: number): Promise<boolean> => {
+      const execute = async (
+        nodes: FlowNode[],
+        depth = 0,
+        item?: IntentResult,
+        iteration?: number,
+      ): Promise<boolean> => {
         if (depth > 8) throw new Error("Control flow is nested too deeply");
         for (const node of nodes) {
+          checkStopped();
           const step = node.step;
           c++;
-          if (this.executionStack.length === 1) {
+          if (stack.length === 1) {
             Blockbench.showStatusMessage(`Macro action (${c}/${total})`, 2 * 1000);
             Blockbench.setProgress(Math.min(1, c / total));
           }
           const params = await resolveStep(step, item, iteration);
+          checkStopped();
           if (params === null) return true;
           if (node.kind === "if") {
             const condition = params.condition !== false && params.condition !== "false" && Boolean(params.condition);
@@ -370,7 +465,9 @@ export abstract class Macros {
             try {
               if (await execute(node.body, depth + 1, item, iteration)) return true;
             } catch (error) {
-              const details = error && typeof error === "object" ? error as { name?: unknown; message?: unknown } : undefined;
+              checkStopped();
+              const details =
+                error && typeof error === "object" ? (error as { name?: unknown; message?: unknown }) : undefined;
               currentResult = {
                 name: typeof details?.name === "string" ? details.name : "Error",
                 message: typeof details?.message === "string" ? details.message : String(error),
@@ -379,13 +476,18 @@ export abstract class Macros {
             }
           } else if (node.kind === "repeat") {
             const count = Number(params.count);
-            if (!Number.isInteger(count) || count < 0 || count > 1000) throw new Error("Repeat count must be between 0 and 1000");
+            if (!Number.isInteger(count) || count < 0 || count > 1000)
+              throw new Error("Repeat count must be between 0 and 1000");
             for (let index = 0; index < count; index++) {
               if (await execute(node.children, depth + 1, item, index)) return true;
             }
           } else if (node.kind === "repeat_each") {
             const itemsInput = params.items === "" || params.items === undefined ? currentResult : params.items;
-            const items = Array.isArray(itemsInput) ? itemsInput : String(itemsInput ?? "").split(/\r?\n/).filter(Boolean);
+            const items = Array.isArray(itemsInput)
+              ? itemsInput
+              : String(itemsInput ?? "")
+                  .split(/\r?\n/)
+                  .filter(Boolean);
             if (items.length > 1000) throw new Error("Repeat Each supports at most 1000 items");
             const outputs: IntentResult[] = [];
             for (let index = 0; index < items.length; index++) {
@@ -399,9 +501,10 @@ export abstract class Macros {
             if (!intentType) continue;
             this.result = currentResult;
             const result = await intentType.perform(params, macro, currentResult);
+            checkStopped();
             if (result === "__return") return true;
             if (result && typeof result === "object" && !Array.isArray(result) && "__macro_stop" in result) {
-              if (this.executionStack.length === 1) this.lastOutput = result.value;
+              if (stack.length === 1) this.lastOutput = result.value;
               currentResult = result.value;
               return true;
             }
@@ -411,13 +514,19 @@ export abstract class Macros {
         return false;
       };
       await execute(parseFlow(macro.intents));
+      checkStopped();
       return currentResult;
     } finally {
-      this.executionStack.pop();
+      stack.pop();
     }
   }
 
-  static async resolveParams(params: IntentParameters, previousInputs: Map<string, IntentParameters>, macro: MacroData, currentResult?: IntentResult): Promise<IntentParameters | null> {
+  static async resolveParams(
+    params: IntentParameters,
+    previousInputs: Map<string, IntentParameters>,
+    macro: MacroData,
+    currentResult?: IntentResult,
+  ): Promise<IntentParameters | null> {
     const result: IntentParameters = {};
     for (const [k, v] of Object.entries(params)) {
       result[k] = await this.resolveValue(v, previousInputs, macro, k, currentResult);
@@ -426,7 +535,13 @@ export abstract class Macros {
     return result;
   }
 
-  static async resolveValue(value: IntentResult, previousInputs: Map<string, IntentParameters>, macro: MacroData, field: string, currentResult?: IntentResult): Promise<IntentResult> {
+  static async resolveValue(
+    value: IntentResult,
+    previousInputs: Map<string, IntentParameters>,
+    macro: MacroData,
+    field: string,
+    currentResult?: IntentResult,
+  ): Promise<IntentResult> {
     if (value === VARIABLE_VALUES.result) return currentResult;
     if (value === VARIABLE_VALUES.askEachTime) {
       return new Promise((resolve) => {
@@ -434,8 +549,12 @@ export abstract class Macros {
           title: macro.name,
           form: { value: { type: "text", label: field.replace(/_/g, " ") } },
           buttons: ["dialog.ok", "dialog.cancel"],
-          onConfirm(result) { resolve(result.value); },
-          onCancel() { resolve(undefined); },
+          onConfirm(result) {
+            resolve(result.value);
+          },
+          onCancel() {
+            resolve(undefined);
+          },
         }).show();
       });
     }

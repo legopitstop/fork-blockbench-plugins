@@ -27,6 +27,19 @@ BBPlugin.register(ID, {
   onuninstall() {},
   onload() {
     Macros.load();
+    const watchdogSetting = new Setting("macros_watchdog_seconds", {
+      name: "Macros: Watchdog limit (seconds)",
+      description: "Stop a macro after this many seconds. Set to 0 to disable the watchdog.",
+      category: "general",
+      type: "number",
+      value: 60,
+      min: 0,
+      max: 3600,
+      onChange(value) {
+        Macros.watchdogSeconds = Number(value);
+      },
+    });
+    Macros.watchdogSeconds = Number(watchdogSetting.value);
 
     Intent.menu = new Action("macros", {
       icon: "play_arrow",
@@ -84,7 +97,9 @@ BBPlugin.register(ID, {
           },
         },
         methods: {
-          importMacro() { Macros.importMacro(); },
+          importMacro() {
+            Macros.importMacro();
+          },
         },
         template: `<div id="macro_manager">
           <div class="macro_manager_toolbar">
@@ -185,6 +200,11 @@ BBPlugin.register(ID, {
     #macro_editor .macro_editor_selection_prompt button {border: 0; border-radius: 4px; background: var(--color-button); padding: 4px 8px;}
     #macro_editor .macro_editor_field > span {width: 110px; flex: 0 0 110px;}
     #macro_editor .macro_editor_value {display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0;}
+    #macro_editor .macro_editor_vector {display: flex; flex: 1; min-width: 0; gap: 2px;}
+    #macro_editor .macro_editor_vector input {width: 0; min-width: 0; flex: 1; text-align: center;}
+    #macro_editor .macro_editor_vector input:nth-child(1) {border-top-right-radius: 0; border-bottom-right-radius: 0; border-top: 2px solid #f44336;}
+    #macro_editor .macro_editor_vector input:nth-child(2) {border-radius: 0; border-top: 2px solid #4caf50;}
+    #macro_editor .macro_editor_vector input:nth-child(3) {border-top-left-radius: 0; border-bottom-left-radius: 0; border-top: 2px solid #2196f3;}
     #macro_editor .macro_editor_value > input:not([type=checkbox]), #macro_editor .macro_editor_value > select {min-width: 0; flex: 1;}
     #macro_editor .macro_editor_value > input[type=checkbox] + button {margin-left: auto;}
     #macro_editor .macro_editor_value button {border: 0; border-radius: 4px; background: var(--color-button); height: 28px; min-width: 28px; padding: 2px;}

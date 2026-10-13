@@ -24,6 +24,9 @@ export function parseInputVariable(value: unknown): { uuid: string; field: strin
 }
 
 export function isVariableValue(value: unknown): value is string {
-  return typeof value === "string" &&
-    (Object.values(VARIABLE_VALUES).includes(value as typeof VARIABLE_VALUES[keyof typeof VARIABLE_VALUES]) || !!parseInputVariable(value));
+  return (
+    typeof value === "string" &&
+    (Object.values(VARIABLE_VALUES).includes(value as (typeof VARIABLE_VALUES)[keyof typeof VARIABLE_VALUES]) ||
+      !!parseInputVariable(value))
+  );
 }
