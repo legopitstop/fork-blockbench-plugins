@@ -18,7 +18,7 @@ import "./services/openai.js";
     icon: "icon.png",
     description: "Your Blockbench AI assistant. (Supports Ollama)",
     has_changelog: true,
-    website: "https://docs.lpsmods.dev/ai_bench",
+    website: "https://lpsmods.dev/bbplugins/ai_bench",
     repository:
       "https://github.com/legopitstop/blockbench-plugins/tree/master/src/ai_bench",
     variant: "both",

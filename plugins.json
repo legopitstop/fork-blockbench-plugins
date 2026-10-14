@@ -1215,7 +1215,7 @@
 		"icon": "icon.png",
 		"description": "desc.",
 		"has_changelog": true,
-		"website": "https://docs.lpsmods.dev/ai_bench",
+		"website": "https://lpsmods.dev/bbplugins/ai_bench",
 		"repository": "https://github.com/legopitstop/blockbench-plugins/tree/master/plugins/ai_bench",
 		"variant": "both",
 		"version": "1.0.0",
