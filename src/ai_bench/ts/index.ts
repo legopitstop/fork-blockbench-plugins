@@ -24,6 +24,7 @@ import "./services/openai.js";
     variant: "both",
     version: VERSION,
     min_version: "4.8.0",
+    creation_date: "2026-23-09",
     tags: ["Blockbench", "AI"],
     new_repository_format: true,
 
