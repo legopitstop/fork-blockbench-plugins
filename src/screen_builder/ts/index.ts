@@ -14,6 +14,7 @@ BBPlugin.register(ID, {
   variant: "both",
   version: VERSION,
   min_version: "4.8.0",
+  creation_date: "2026-10-13",
   tags: ["Blockbench"],
   new_repository_format: true,
   onload() {
