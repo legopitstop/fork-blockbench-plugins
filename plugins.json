@@ -1215,7 +1215,7 @@
 		"icon": "icon.png",
 		"description": "desc.",
 		"has_changelog": true,
-		"website": "https://docs.lpsmods.dev/screen_builder",
+		"website": "https://lpsmods.dev/bbplugins/screen_builder",
 		"repository": "https://github.com/legopitstop/blockbench-plugins/tree/master/plugins/screen_builder",
 		"variant": "both",
 		"version": "1.0.0",

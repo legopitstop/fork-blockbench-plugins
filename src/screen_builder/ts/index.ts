@@ -9,7 +9,7 @@ BBPlugin.register(ID, {
   icon: "icon.png",
   description: "A visual editor for Minecraft: Bedrock GUIs",
   has_changelog: true,
-  website: "https://docs.lpsmods.dev/screen_builder",
+  website: "https://lpsmods.dev/bbplugins/screen_builder",
   repository: "https://github.com/legopitstop/blockbench-plugins/tree/master/plugins/screen_builder",
   variant: "both",
   version: VERSION,
