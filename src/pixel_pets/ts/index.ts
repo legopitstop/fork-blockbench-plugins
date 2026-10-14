@@ -22,6 +22,7 @@ import './animal/dog.js';
     version: VERSION,
     min_version: "4.8.0",
     tags: ["Blockbench"],
+    creation_date: "2026-10-13",
     new_repository_format: true,
     onload() {
       deleteables.push(spawnPet);
