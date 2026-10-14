@@ -16,7 +16,7 @@ BBPlugin.register(ID, {
   icon: "icon.png",
   description: "This plugin lets you automate actions.",
   has_changelog: true,
-  website: "https://docs.lpsmods.dev/macros",
+  website: "https://lpsmods.dev/bbplugins/macros",
   repository: "https://github.com/legopitstop/blockbench-plugins/tree/master/plugins/macros",
   variant: "both",
   version: VERSION,
