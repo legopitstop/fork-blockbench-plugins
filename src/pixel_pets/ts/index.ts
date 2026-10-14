@@ -15,7 +15,7 @@ import './animal/dog.js';
     icon: "icon.png",
     description: "",
     has_changelog: true,
-    website: "https://docs.lpsmods.dev/pixel_pets",
+    website: "https://lpsmods.dev/bbplugins/pixel_pets",
     repository:
       "https://github.com/legopitstop/blockbench-plugins/tree/master/src/pixel_pets",
     variant: "both",
